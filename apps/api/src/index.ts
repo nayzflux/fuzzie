@@ -1,8 +1,17 @@
 import { Hono } from "hono";
+import { cors } from "hono/cors";
+import { env } from "~/lib/env";
 import auth from "~/routes/auth";
 import users from "~/routes/users";
 
 const app = new Hono().basePath("/api");
+
+app.use(
+  cors({
+    origin: env.CLIENT_URL,
+    allowMethods: ["POST", "GET", "PATCH", "DELETE"],
+  })
+);
 
 app.route("/auth", auth);
 app.route("/users", users);
