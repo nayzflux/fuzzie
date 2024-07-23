@@ -1,9 +1,12 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { HTTPError } from "ky";
+import { Loader2Icon } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-
 import { Button } from "~/components/ui/button";
 import {
   Form,
@@ -14,6 +17,9 @@ import {
   FormMessage,
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
+import { api } from "~/lib/api";
+import { CurrentUser } from "~/types/user";
+import { useToast } from "../ui/use-toast";
 
 const formSchema = z.object({
   email: z.string().email().max(320),
@@ -21,6 +27,93 @@ const formSchema = z.object({
 });
 
 export default function SignUpForm() {
+  const { push } = useRouter();
+  const { toast } = useToast();
+
+  const queryClient = useQueryClient();
+  const { mutate, isPending } = useMutation({
+    mutationKey: ["sign-up"],
+    /**
+     * Mutate function
+     */
+    mutationFn: async (values: z.infer<typeof formSchema>) => {
+      const res = await api.post("auth/sign-up", {
+        json: values,
+      });
+
+      const user = (await res.json()) satisfies CurrentUser;
+
+      return user;
+    },
+    /**
+     * Retry
+     */
+    retry: (count, err) => {
+      if (count >= 3) return false;
+
+      if (err instanceof HTTPError) {
+        const code = err.response.status;
+
+        // Conflict
+        if (code === 429) return false;
+
+        // Conflict
+        if (code === 409) return false;
+      }
+
+      return true;
+    },
+    /**
+     * Handle error
+     */
+    onError: (err) => {
+      if (err instanceof HTTPError) {
+        const code = err.response.status;
+
+        // Rate limited
+        if (code === 429) {
+          return toast({
+            title: "Sign-Up failed",
+            description: `Slow down! You're being rate limited.`,
+            variant: "destructive",
+          });
+        }
+
+        // Conflict
+        if (code === 409) {
+          return toast({
+            title: "Sign-Up failed",
+            description: `Email adress already in-use!`,
+            variant: "destructive",
+          });
+        }
+      }
+
+      toast({
+        title: "Sign-Up failed",
+        description: `Unknown error! Please try-again.`,
+        variant: "destructive",
+      });
+    },
+    /**
+     * Handle success
+     */
+    onSuccess: (user) => {
+      toast({
+        title: "Signed-Up",
+        description: `${user.email} account has been created successfully!`,
+      });
+
+      push("/app");
+    },
+    /**
+     * After
+     */
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["current-user"] });
+    },
+  });
+
   // 1. Define your form.
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -34,7 +127,7 @@ export default function SignUpForm() {
   function onSubmit(values: z.infer<typeof formSchema>) {
     // Do something with the form values.
     // ✅ This will be type-safe and validated.
-    console.log(values);
+    mutate(values);
   }
 
   return (
@@ -52,7 +145,11 @@ export default function SignUpForm() {
               <FormLabel>Email</FormLabel>
 
               <FormControl>
-                <Input placeholder="name@example.com" {...field} />
+                <Input
+                  placeholder="name@example.com"
+                  {...field}
+                  disabled={isPending}
+                />
               </FormControl>
 
               <FormMessage />
@@ -69,7 +166,12 @@ export default function SignUpForm() {
               <FormLabel>Password</FormLabel>
 
               <FormControl>
-                <Input type="password" placeholder="************" {...field} />
+                <Input
+                  type="password"
+                  placeholder="************"
+                  {...field}
+                  disabled={isPending}
+                />
               </FormControl>
 
               <FormMessage />
@@ -78,7 +180,8 @@ export default function SignUpForm() {
         />
 
         {/* Submit button */}
-        <Button type="submit" className="w-full">
+        <Button type="submit" className="w-full" disabled={isPending}>
+          {isPending && <Loader2Icon className="size-4 mr-2 animate-spin" />}
           Sign Up
         </Button>
       </form>

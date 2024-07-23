@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { Toaster } from "~/components/ui/toaster";
+import QueryProvider from "~/providers/query-provider";
 import ThemeProvider from "~/providers/theme-provider";
 import "./globals.css";
 
@@ -19,9 +21,12 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <ThemeProvider>
-          <div className="w-screen min-h-screen overflow-hidden">
-            {children}
-          </div>
+          <QueryProvider>
+            <Toaster />
+            <div className="w-screen min-h-screen overflow-hidden">
+              {children}
+            </div>
+          </QueryProvider>
         </ThemeProvider>
       </body>
     </html>
