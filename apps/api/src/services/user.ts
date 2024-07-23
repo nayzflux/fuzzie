@@ -68,7 +68,7 @@ export const getUserWithPassword = async (email: string) => {
 
 export const getUser = async (id: string) => {
   return await db.query.users.findFirst({
-    where: eq(userTable.email, id),
+    where: eq(userTable.id, id),
     columns: {
       password: false,
     },
@@ -85,5 +85,52 @@ export const setUserEmailVerification = async (
     .set({
       isEmailVerified,
     })
-    .where(and(eq(userTable.id, id), eq(userTable.email, email)));
+    .where(and(eq(userTable.id, id), eq(userTable.email, email)))
+    .returning({
+      id: userTable.id,
+      email: userTable.email,
+      isEmailVerified: userTable.isEmailVerified,
+      createdAt: userTable.createdAt,
+    })
+    .get();
+};
+
+export const updateUser = async (
+  userId: string,
+  values: {
+    id?: string;
+    email?: string;
+    createdAt?: Date;
+    isEmailVerified?: boolean;
+    password?: string;
+  }
+) => {
+  const user = await db
+    .update(userTable)
+    .set(values)
+    .where(eq(userTable.id, userId))
+    .returning({
+      id: userTable.id,
+      email: userTable.email,
+      isEmailVerified: userTable.isEmailVerified,
+      createdAt: userTable.createdAt,
+    })
+    .get();
+
+  return user;
+};
+
+export const deleteUser = async (userId: string) => {
+  const user = await db
+    .delete(userTable)
+    .where(eq(userTable.id, userId))
+    .returning({
+      id: userTable.id,
+      email: userTable.email,
+      isEmailVerified: userTable.isEmailVerified,
+      createdAt: userTable.createdAt,
+    })
+    .get();
+
+  return user;
 };

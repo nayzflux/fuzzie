@@ -24,8 +24,8 @@ export const getSession = async (c: Context) => {
   // Get session ID from cookie
   const sessionId = await getSignedCookie(
     c,
-    lucia.sessionCookieName,
-    env.SESSION_COOKIE_SECRET
+    env.SESSION_COOKIE_SECRET,
+    lucia.sessionCookieName
   );
   if (!sessionId) throw new HTTPException(401);
 
