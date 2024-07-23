@@ -10,6 +10,7 @@ app.use(
   cors({
     origin: env.CLIENT_URL,
     allowMethods: ["POST", "GET", "PATCH", "DELETE"],
+    credentials: true,
   })
 );
 
