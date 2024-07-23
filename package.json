@@ -4,19 +4,5 @@
   "workspaces": [
     "apps/*",
     "packages/*"
-  ],
-  "dependencies": {
-    "@hono/zod-validator": "^0.2.2",
-    "@lucia-auth/adapter-drizzle": "^1.0.7",
-    "arctic": "^1.9.2",
-    "drizzle-orm": "^0.32.0",
-    "hono": "^4.5.1",
-    "lucia": "^3.2.0",
-    "stripe": "^16.2.0",
-    "zod": "^3.23.8"
-  },
-  "devDependencies": {
-    "drizzle-kit": "^0.23.0",
-    "ngrok": "^5.0.0-beta.2"
-  }
+  ]
 }
