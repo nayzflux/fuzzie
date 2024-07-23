@@ -69,10 +69,10 @@ app.post("/sign-in", zValidator("json", signInBody), async (c) => {
   // Set session
   await setSession(c, user.id);
 
-  // If email hasn't been verified send email verification link
-  if (!user.isEmailVerified) {
-    await sendEmailVerificationLink(email, user.id);
-  }
+  // // If email hasn't been verified send email verification link
+  // if (!user.isEmailVerified) {
+  //   await sendEmailVerificationLink(email, user.id);
+  // }
 
   return c.json({
     id: user.id,
