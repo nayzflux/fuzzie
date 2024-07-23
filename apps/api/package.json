@@ -1,0 +1,22 @@
+{
+  "name": "api",
+  "module": "src/index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.7.0",
+    "@t3-oss/env-core": "^0.11.0",
+    "nanoid": "^5.0.7",
+    "resend": "^3.5.0"
+  },
+  "scripts": {
+    "dev": "bun run --hot src/index.ts",
+    "db:push": "bun drizzle-kit push",
+    "db:studio": "bun drizzle-kit studio"
+  }
+}
