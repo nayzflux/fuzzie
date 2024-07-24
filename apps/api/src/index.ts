@@ -2,10 +2,14 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { env } from "~/lib/env";
 import auth from "~/routes/auth";
+import projects from "~/routes/projects";
 import users from "~/routes/users";
 
 const app = new Hono().basePath("/api");
 
+/**
+ * CORS
+ */
 app.use(
   cors({
     origin: env.CLIENT_URL,
@@ -14,8 +18,12 @@ app.use(
   })
 );
 
+/**
+ * Routes
+ */
 app.route("/auth", auth);
 app.route("/users", users);
+app.route("/projects", projects);
 
 /**
  * Listen on port 5000
