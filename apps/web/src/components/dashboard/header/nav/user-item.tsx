@@ -1,6 +1,7 @@
 "use client";
 
 import { Slash } from "lucide-react";
+import Link from "next/link";
 import {
   BreadcrumbItem,
   BreadcrumbLink,
@@ -23,15 +24,20 @@ export default function UserItem() {
         {isPending ? (
           <Skeleton className="size-6 rounded-full sm:rounded-lg sm:w-60 h-5" />
         ) : (
-          <BreadcrumbLink href="/app" className="flex items-center">
-            <UserAvatar
-              width={24}
-              height={24}
-              user={user}
-              className="size-6 mr-2"
-            />
+          <BreadcrumbLink>
+            <Link
+              href="/app"
+              className="flex items-center text-muted-foreground"
+            >
+              <UserAvatar
+                width={24}
+                height={24}
+                user={user}
+                className="size-6 mr-2"
+              />
 
-            <p className="hidden sm:inline">{user?.email}</p>
+              <p className="hidden sm:inline">{user?.email}</p>
+            </Link>
           </BreadcrumbLink>
         )}
       </BreadcrumbItem>

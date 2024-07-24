@@ -152,6 +152,9 @@ app.delete("/:projectId", async (c) => {
    */
   if (project.userId !== session.user.id) throw new HTTPException(403);
 
+  /**
+   * Delete project
+   */
   const deletedProject = await deleteProject(project.id);
 
   return c.json(deletedProject);

@@ -24,7 +24,6 @@ export default function ProjectItem() {
   if (!params.projectId) return null;
 
   const { data: projects, isPending } = useProjects();
-  // const { data: project } = useCurrentUser();
 
   return (
     <>
