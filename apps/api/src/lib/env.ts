@@ -12,6 +12,12 @@ export const env = createEnv({
     // Client
     CLIENT_URL: z.string().url(),
 
+    // Internal webhook
+    INTERNAL_WEBHOOK_SECRET: z.string(),
+
+    // Webhook secret encryption secret key
+    WEBHOOK_SECRET_SECRET: z.string(),
+
     // Session
     SESSION_COOKIE_SECRET: z.string(),
 

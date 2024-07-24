@@ -8,20 +8,23 @@
     "ngrok": "^5.0.0-beta.2"
   },
   "peerDependencies": {
-    "typescript": "^5.0.0"
+    "typescript": "^5.5.4"
   },
   "dependencies": {
+    "@hono/zod-validator": "^0.2.2",
     "@libsql/client": "^0.7.0",
+    "@lucia-auth/adapter-drizzle": "^1.0.7",
     "@t3-oss/env-core": "^0.11.0",
+    "@trigger.dev/sdk": "3.0.0-beta.50",
+    "arctic": "^1.9.2",
+    "drizzle-orm": "^0.32.1",
+    "hono": "^4.5.1",
+    "ky": "^1.4.0",
+    "lucia": "^3.2.0",
     "nanoid": "^5.0.7",
     "resend": "^3.5.0",
-    "@hono/zod-validator": "^0.2.2",
-    "@lucia-auth/adapter-drizzle": "^1.0.7",
-    "arctic": "^1.9.2",
-    "drizzle-orm": "^0.32.0",
-    "hono": "^4.5.1",
-    "lucia": "^3.2.0",
-    "stripe": "^16.2.0",
+    "stripe": "^16.4.0",
+    "trigger.dev": "^3.0.0-beta.51",
     "zod": "^3.23.8"
   },
   "scripts": {

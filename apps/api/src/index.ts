@@ -4,6 +4,7 @@ import { env } from "~/lib/env";
 import auth from "~/routes/auth";
 import projects from "~/routes/projects";
 import users from "~/routes/users";
+import webhook from "~/routes/webhook";
 
 const app = new Hono().basePath("/api");
 
@@ -24,6 +25,7 @@ app.use(
 app.route("/auth", auth);
 app.route("/users", users);
 app.route("/projects", projects);
+app.route("/webhook", webhook);
 
 /**
  * Listen on port 5000
