@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "~/db";
-import { userTable } from "~/db/schema";
+import { userTable, type User } from "~/db/schema";
 import { newId } from "~/lib/nanoid";
 import { createHash } from "~/utils/password";
 
@@ -95,16 +95,7 @@ export const setUserEmailVerification = async (
     .get();
 };
 
-export const updateUser = async (
-  userId: string,
-  values: {
-    id?: string;
-    email?: string;
-    createdAt?: Date;
-    isEmailVerified?: boolean;
-    password?: string;
-  }
-) => {
+export const updateUser = async (userId: string, values: Partial<User>) => {
   const user = await db
     .update(userTable)
     .set(values)

@@ -1,20 +1,19 @@
 import { zValidator } from "@hono/zod-validator";
-import { CryptoHasher } from "bun";
-import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
-import { db } from "~/db";
-import { apiKeyTable, eventTable, webhookRequestTable } from "~/db/schema";
 import { env } from "~/lib/env";
-import { newId } from "~/lib/nanoid";
+import { getApiKeyWithProject } from "~/services/api-keys";
+import { createEvent } from "~/services/event";
 import {
   createProject,
   deleteProject,
   getProject,
+  getProjectEvents,
   getUserProjects,
   updateProject,
 } from "~/services/project";
+import { createWebhookRequest } from "~/services/webhook-request";
 import { runWebhookRequest } from "~/trigger/run-webhook-request-task";
 import { encrypt } from "~/utils/encryption";
 import { getSession } from "~/utils/session";
@@ -173,7 +172,7 @@ app.delete("/:projectId", async (c) => {
  */
 const triggerEventBody = z.object({
   name: z.string().min(1).max(32),
-  data: z.unknown(),
+  data: z.record(z.unknown()),
   webhookUrl: z.string().url().min(1).max(1024),
   webhookSecret: z.string().min(1).max(1024),
 });
@@ -188,14 +187,7 @@ app.post(
     const apiKey = c.req.header("X-API-Key");
     if (!apiKey) throw new HTTPException(401);
 
-    const hash = CryptoHasher.hash("sha256", apiKey, "base64");
-
-    const key = await db.query.apiKeys.findFirst({
-      where: eq(apiKeyTable.key, hash),
-      with: {
-        project: true,
-      },
-    });
+    const key = await getApiKeyWithProject(apiKey);
 
     if (!key) throw new HTTPException(401);
 
@@ -219,52 +211,22 @@ app.post(
     /**
      * Create event
      */
-    const event = await db
-      .insert(eventTable)
-      .values({
-        id: newId("e"),
-        name,
-        data,
-        webhookUrl,
-        webhookSecret: encryptedWebhookSecret,
-        status: "TRIGGERED",
-        createdAt: new Date(),
-        projectId,
-      })
-      .returning({
-        id: eventTable.id,
-        name: eventTable.name,
-        data: eventTable.data,
-        webhookUrl: eventTable.webhookUrl,
-        status: eventTable.status,
-        createdAt: eventTable.createdAt,
-        projectId: eventTable.projectId,
-      })
-      .get();
+    const event = await createEvent(
+      name,
+      webhookUrl,
+      encryptedWebhookSecret,
+      data,
+      projectId
+    );
 
     /**
      * Create webhook request and schedule it
      */
-    const webhookRequest = await db
-      .insert(webhookRequestTable)
-      .values({
-        id: newId("wh_req"),
-        status: "SCHEDULED",
-        createdAt: new Date(),
-        eventId: event.id,
-      })
-      .returning()
-      .get();
+    const webhookRequest = await createWebhookRequest(event.id);
 
     /**
      * Run task
-     * - url
-     * - secret
-     * - data
-     * - eventName
-     * - webhookRequest
      */
-
     await runWebhookRequest.trigger({
       url: webhookUrl,
       secret: encryptedWebhookSecret,
@@ -276,5 +238,35 @@ app.post(
     return c.json(event, 201);
   }
 );
+
+/**
+ * Get project events
+ */
+app.get("/:projectId/events", async (c) => {
+  /**
+   * Authentication
+   */
+  const session = await getSession(c);
+  if (!session) throw new HTTPException(401);
+
+  const { projectId } = c.req.param();
+
+  /**
+   * Get project events
+   */
+  const project = await getProjectEvents(projectId);
+
+  /**
+   * If project doesn't exists
+   */
+  if (!project) throw new HTTPException(404);
+
+  /**
+   * Authorization
+   */
+  if (project.userId !== session.user.id) throw new HTTPException(403);
+
+  return c.json(project.events);
+});
 
 export default app;

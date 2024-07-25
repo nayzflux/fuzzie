@@ -1,4 +1,8 @@
-import { relations } from "drizzle-orm";
+import {
+  relations,
+  type InferInsertModel,
+  type InferSelectModel,
+} from "drizzle-orm";
 import {
   integer,
   primaryKey,
@@ -18,6 +22,9 @@ export const userTable = sqliteTable("users", {
   password: text("password"),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
 });
+
+export type NewUser = InferInsertModel<typeof userTable>;
+export type User = InferSelectModel<typeof userTable>;
 
 /**
  * Sessions
@@ -71,6 +78,13 @@ export const projectTable = sqliteTable("project", {
     }),
 });
 
+export type NewProject = InferInsertModel<typeof projectTable>;
+export type Project = InferSelectModel<typeof projectTable>;
+
+export const projectRelations = relations(projectTable, ({ many }) => ({
+  events: many(eventTable),
+}));
+
 /**
  * API Keys
  */
@@ -115,6 +129,16 @@ export const eventTable = sqliteTable("events", {
     }),
 });
 
+export type NewEvent = InferInsertModel<typeof eventTable>;
+export type Event = InferSelectModel<typeof eventTable>;
+
+export const eventRelations = relations(eventTable, ({ one }) => ({
+  project: one(projectTable, {
+    fields: [eventTable.projectId],
+    references: [projectTable.id],
+  }),
+}));
+
 /**
  * Webhook request
  */
@@ -143,3 +167,6 @@ export const webhookRequestTable = sqliteTable("webhook_requests", {
       onUpdate: "cascade",
     }),
 });
+
+export type NewWebhookRequest = InferInsertModel<typeof webhookRequestTable>;
+export type WebhookRequest = InferSelectModel<typeof webhookRequestTable>;

@@ -5,7 +5,9 @@ import {
   accountTable,
   apiKeyRelations,
   apiKeyTable,
+  eventRelations,
   eventTable,
+  projectRelations,
   projectTable,
   sessionTable,
   userTable,
@@ -24,5 +26,7 @@ export const db = drizzle(client, {
     apiKeys: apiKeyTable,
     events: eventTable,
     apiKeyRelations,
+    projectRelations,
+    eventRelations,
   },
 });

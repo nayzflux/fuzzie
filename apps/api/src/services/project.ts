@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { db } from "~/db";
-import { projectTable } from "~/db/schema";
+import { projectTable, type Project } from "~/db/schema";
 import { newId } from "~/lib/nanoid";
 
 export const createProject = async (name: string, userId: string) => {
@@ -55,7 +55,7 @@ export const getProject = async (projectId: string) => {
 
 export const updateProject = async (
   projectId: string,
-  values: { name?: string }
+  values: Partial<Project>
 ) => {
   /**
    * Update project in DB
@@ -82,3 +82,16 @@ export const deleteProject = async (projectId: string) => {
 
   return project;
 };
+
+export const getProjectEvents = async (projectId: string) =>
+  await db.query.projects.findFirst({
+    where: eq(projectTable.id, projectId),
+    with: {
+      events: {
+        columns: {
+          data: false,
+          webhookSecret: false,
+        },
+      },
+    },
+  });

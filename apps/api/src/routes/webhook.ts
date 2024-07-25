@@ -3,27 +3,31 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import cryto from "node:crypto";
 import { db } from "~/db";
-import { eventTable, webhookRequestTable } from "~/db/schema";
+import { eventTable } from "~/db/schema";
 import { env } from "~/lib/env";
-import { newId } from "~/lib/nanoid";
+import { updateEvent } from "~/services/event";
+import {
+  createWebhookRequest,
+  updateWebhookRequest,
+} from "~/services/webhook-request";
 import { runWebhookRequest } from "~/trigger/run-webhook-request-task";
 
 const app = new Hono();
 
 const RETRY_DELAYS = [
   "30s",
-  // "1m",
-  // "5m",
-  // "10m",
-  // "30m",
-  // "1h",
-  // "2h",
-  // "3h",
-  // "6h",
-  // "12h",
-  // "24h",
-  // "72h",
-  // "7d",
+  "1m",
+  "5m",
+  "10m",
+  "30m",
+  "1h",
+  "2h",
+  "3h",
+  "6h",
+  "12h",
+  "24h",
+  "72h",
+  "7d",
 ];
 
 app.post("/internal", async (c) => {
@@ -62,32 +66,24 @@ app.post("/internal", async (c) => {
     /**
      * Set event status to DELIVERED
      */
-    await db
-      .update(eventTable)
-      .set({
-        status: "DELIVERED",
-      })
-      .where(eq(eventTable.id, webhookRequest.eventId));
+    await updateEvent(webhookRequest.eventId, { status: "DELIVERED" });
 
     /**
      * Set webhook request status to SUCCEEDED
      */
-    await db
-      .update(webhookRequestTable)
-      .set({
-        status: "SUCCEEDED",
+    await updateWebhookRequest(webhookRequest.id, {
+      status: "SUCCEEDED",
 
-        sentAt: new Date(webhookRequest.sentAt),
+      sentAt: new Date(webhookRequest.sentAt),
 
-        requestUrl: webhookRequest.requestUrl,
-        requestHeaders: webhookRequest.requestHeaders,
-        requestBody: webhookRequest.requestBody,
+      requestUrl: webhookRequest.requestUrl,
+      requestHeaders: webhookRequest.requestHeaders,
+      requestBody: webhookRequest.requestBody,
 
-        responseHeaders: webhookRequest.responseHeaders,
-        responseBody: webhookRequest.responseBody,
-        responseCode: webhookRequest.responseCode,
-      })
-      .where(eq(webhookRequestTable.id, webhookRequest.id));
+      responseHeaders: webhookRequest.responseHeaders,
+      responseBody: webhookRequest.responseBody,
+      responseCode: webhookRequest.responseCode,
+    });
 
     return c.json({}, 200);
   }
@@ -105,22 +101,19 @@ app.post("/internal", async (c) => {
     /**
      * Set webhook request status to FAILED
      */
-    await db
-      .update(webhookRequestTable)
-      .set({
-        status: "FAILED",
+    await updateWebhookRequest(webhookRequest.id, {
+      status: "FAILED",
 
-        sentAt: new Date(webhookRequest.sentAt),
+      sentAt: new Date(webhookRequest.sentAt),
 
-        requestUrl: webhookRequest.requestUrl,
-        requestHeaders: webhookRequest.requestHeaders,
-        requestBody: webhookRequest.requestBody,
+      requestUrl: webhookRequest.requestUrl,
+      requestHeaders: webhookRequest.requestHeaders,
+      requestBody: webhookRequest.requestBody,
 
-        responseHeaders: webhookRequest.responseHeaders,
-        responseBody: webhookRequest.responseBody,
-        responseCode: webhookRequest.responseCode,
-      })
-      .where(eq(webhookRequestTable.id, webhookRequest.id));
+      responseHeaders: webhookRequest.responseHeaders,
+      responseBody: webhookRequest.responseBody,
+      responseCode: webhookRequest.responseCode,
+    });
 
     /**
      * Handle retry
@@ -141,16 +134,7 @@ app.post("/internal", async (c) => {
 
       if (!event) throw new HTTPException(404);
 
-      const newWebhookRequest = await db
-        .insert(webhookRequestTable)
-        .values({
-          id: newId("wh_req"),
-          status: "SCHEDULED",
-          createdAt: new Date(),
-          eventId: event.id,
-        })
-        .returning()
-        .get();
+      const newWebhookRequest = await createWebhookRequest(event.id);
 
       /**
        * Schedule task
@@ -172,12 +156,7 @@ app.post("/internal", async (c) => {
       /**
        * If no retry left set event status to NOT_DELIVERED
        */
-      await db
-        .update(eventTable)
-        .set({
-          status: "NOT_DELIVERED",
-        })
-        .where(eq(eventTable.id, webhookRequest.eventId));
+      await updateEvent(webhookRequest.eventId, { status: "DELIVERED" });
     }
 
     return c.json({}, 200);
