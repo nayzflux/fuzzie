@@ -27,8 +27,6 @@ export default function ProjectNav() {
   const { projectId } = useParams() as { projectId: string };
   const pathname = usePathname();
 
-  console.log(pathname);
-
   return (
     <nav>
       <ul className="flex px-4 sm:px-16 lg:px-32 xl:px-64 2xl:px-96">

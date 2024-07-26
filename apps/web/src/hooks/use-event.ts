@@ -10,4 +10,5 @@ export const useEvent = (eventId: string) =>
       const event = (await res.json()) satisfies Event;
       return event;
     },
+    refetchInterval: 30 * 1000,
   });

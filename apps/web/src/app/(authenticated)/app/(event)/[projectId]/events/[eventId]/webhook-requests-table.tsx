@@ -13,6 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
+import { formatDateTimeLong } from "~/lib/format";
 import { PartialWebhookRequest } from "~/types/webhook-request";
 import WebhookRequestStatusBadge from "./webhook-request-status-badge";
 
@@ -34,26 +35,21 @@ export const columns: ColumnDef<PartialWebhookRequest>[] = [
     header: "Sent At",
     cell: ({ row }) => (
       <div>
-        {row.original.sentAt ? (
-          <>
-            {new Date(row.original.sentAt).toLocaleDateString()}{" "}
-            {new Date(row.original.sentAt).toLocaleTimeString()}
-          </>
-        ) : (
-          "Not sent yet"
-        )}
+        {row.original.sentAt ? formatDateTimeLong(row.original.sentAt) : "---"}
       </div>
+    ),
+  },
+  {
+    accessorKey: "scheduledFor",
+    header: "Scheduled For",
+    cell: ({ row }) => (
+      <div>{formatDateTimeLong(row.original.scheduledFor)}</div>
     ),
   },
   {
     accessorKey: "createdAt",
     header: "Created At",
-    cell: ({ row }) => (
-      <div>
-        {new Date(row.original.createdAt).toLocaleDateString()}{" "}
-        {new Date(row.original.createdAt).toLocaleTimeString()}
-      </div>
-    ),
+    cell: ({ row }) => <div>{formatDateTimeLong(row.original.createdAt)}</div>,
   },
 ];
 

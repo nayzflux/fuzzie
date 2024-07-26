@@ -159,8 +159,10 @@ export const webhookRequestTable = sqliteTable("webhook_requests", {
   }),
 
   sentAt: integer("sent_at", { mode: "timestamp_ms" }),
+  scheduledFor: integer("scheduled_for", { mode: "timestamp_ms" }).notNull(),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
 
+  runId: text("run_id"),
   eventId: text("event_id")
     .notNull()
     .references(() => eventTable.id, {

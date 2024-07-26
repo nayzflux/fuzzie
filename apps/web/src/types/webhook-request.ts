@@ -13,6 +13,7 @@ export type PartialWebhookRequest = {
 
   status: "SCHEDULED" | "SUCCEEDED" | "FAILED";
 
+  scheduledFor: string;
   sentAt: string | null;
   createdAt: string;
 

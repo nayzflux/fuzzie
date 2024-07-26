@@ -47,6 +47,14 @@ export const getEventWithProject = async (id: string) =>
     },
   });
 
+export const getEventWithProjectAndWebhookSecret = async (id: string) =>
+  db.query.events.findFirst({
+    where: eq(eventTable.id, id),
+    with: {
+      project: true,
+    },
+  });
+
 export const getEventWithProjectAndWebhookRequests = async (id: string) =>
   db.query.events.findFirst({
     where: eq(eventTable.id, id),

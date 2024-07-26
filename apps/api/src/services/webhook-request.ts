@@ -3,7 +3,10 @@ import { db } from "~/db";
 import { webhookRequestTable, type WebhookRequest } from "~/db/schema";
 import { newId } from "~/lib/nanoid";
 
-export const createWebhookRequest = async (eventId: string) =>
+export const createWebhookRequest = async (
+  eventId: string,
+  scheduledFor: Date
+) =>
   await db
     .insert(webhookRequestTable)
     .values({
@@ -11,6 +14,7 @@ export const createWebhookRequest = async (eventId: string) =>
       status: "SCHEDULED",
       createdAt: new Date(),
       eventId: eventId,
+      scheduledFor,
     })
     .returning()
     .get();

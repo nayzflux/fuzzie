@@ -1,6 +1,7 @@
 import { logger, task } from "@trigger.dev/sdk/v3";
 import ky, { HTTPError } from "ky";
 import crypto from "node:crypto";
+import type { InternalWebhookRequestEvent } from "~/types/internal-event";
 import { decrypt } from "~/utils/encryption";
 
 export const runWebhookRequest = task({
@@ -31,7 +32,11 @@ export const runWebhookRequest = task({
       /**
        * Construct body
        */
-      const body = {
+      const body: {
+        event: string;
+        data: Record<string, unknown>;
+        sentAt: string | Date;
+      } = {
         event: payload.eventName,
         data: payload.data,
         sentAt,
@@ -66,7 +71,8 @@ export const runWebhookRequest = task({
       /**
        * Trigger webhook request succeeded event
        */
-      const body2 = {
+
+      const body2: InternalWebhookRequestEvent = {
         event: "webhook_request.succeeded",
         data: {
           id: payload.webhookRequest.id,
@@ -79,7 +85,7 @@ export const runWebhookRequest = task({
 
           responseBody: responseBody,
           responseCode: res.status,
-          responseHeaders: res.headers,
+          responseHeaders: {},
           retry,
         },
         sentAt: new Date(),
@@ -108,7 +114,7 @@ export const runWebhookRequest = task({
       /**
        * Trigger webhook request failed event
        */
-      let body2: any = {
+      let body2: InternalWebhookRequestEvent = {
         event: "webhook_request.failed",
         data: {
           id: payload.webhookRequest.id,
@@ -139,11 +145,11 @@ export const runWebhookRequest = task({
 
             requestUrl: requestUrl,
             requestBody: requestBody,
-            requestHeaders: requestHeaders,
+            requestHeaders: {},
 
             responseBody: responseBody,
             responseCode: requestCode,
-            responseHeaders: responseHeaders,
+            responseHeaders: {},
 
             retry,
           },

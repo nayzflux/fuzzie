@@ -4,11 +4,12 @@ import { useParams } from "next/navigation";
 import EventStatusBadge from "~/app/(authenticated)/app/[projectId]/events/event-status-badge";
 import CodeBlock from "~/components/code-block";
 import { Badge } from "~/components/ui/badge";
-import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
 import { Separator } from "~/components/ui/separator";
 import { Skeleton } from "~/components/ui/skeleton";
 import { useEvent } from "~/hooks/use-event";
+import { formatDateTimeLong } from "~/lib/format";
+import ReplayEventDialog from "./replay-event-dialog";
 import WebhookRequestsWrapper from "./webhook-requests-wrapper";
 
 export default function EventPage() {
@@ -17,7 +18,6 @@ export default function EventPage() {
     projectId: string;
   };
   const { data: event, isPending } = useEvent(eventId);
-  // let isPending = true;
 
   return (
     <div className="flex flex-col gap-8">
@@ -30,7 +30,7 @@ export default function EventPage() {
         )}
 
         <div className="flex items-center gap-4">
-          <Button variant="outline">Replay</Button>
+          <ReplayEventDialog />
         </div>
       </div>
 
@@ -45,11 +45,7 @@ export default function EventPage() {
           {isPending ? (
             <Skeleton className="h-[25px] w-40" />
           ) : (
-            <p>
-              {new Date(event?.createdAt || "").toLocaleDateString() +
-                " " +
-                new Date(event?.createdAt || "").toLocaleTimeString()}
-            </p>
+            <p>{formatDateTimeLong(event?.createdAt || "")}</p>
           )}
         </Card>
 
@@ -100,7 +96,7 @@ export default function EventPage() {
 
       <Separator />
 
-      <WebhookRequestsWrapper/>
+      <WebhookRequestsWrapper />
     </div>
   );
 }

@@ -1,7 +1,10 @@
 import { zValidator } from "@hono/zod-validator";
+import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
+import { db } from "~/db";
+import { webhookRequestTable } from "~/db/schema";
 import { env } from "~/lib/env";
 import { getApiKeyWithProject } from "~/services/api-keys";
 import { createEvent } from "~/services/event";
@@ -222,18 +225,28 @@ app.post(
     /**
      * Create webhook request and schedule it
      */
-    const webhookRequest = await createWebhookRequest(event.id);
+    const webhookRequest = await createWebhookRequest(event.id, new Date());
 
     /**
      * Run task
      */
-    await runWebhookRequest.trigger({
+    const { id: runId } = (await runWebhookRequest.trigger({
       url: webhookUrl,
       secret: encryptedWebhookSecret,
       eventName: name,
       data: data,
       webhookRequest,
-    });
+    })) as unknown as { id: string };
+
+    /**
+     * Update run ID
+     */
+    await db
+      .update(webhookRequestTable)
+      .set({
+        runId,
+      })
+      .where(eq(webhookRequestTable.id, webhookRequest.id));
 
     return c.json(event, 201);
   }

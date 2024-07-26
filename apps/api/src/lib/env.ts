@@ -29,6 +29,9 @@ export const env = createEnv({
     // Email
     EMAIL_VERIFICATION_SECRET: z.string(),
     RESEND_API_KEY: z.string(),
+
+    // Trigger
+    TRIGGER_SECRET_KEY: z.string(),
   },
 
   /**

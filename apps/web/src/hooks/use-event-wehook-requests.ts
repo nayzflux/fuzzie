@@ -11,4 +11,5 @@ export const useEventWebhookRequests = (eventId: string) =>
         (await res.json()) satisfies PartialWebhookRequest[];
       return webhookRequests;
     },
+    refetchInterval: 30 * 1000,
   });

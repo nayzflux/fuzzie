@@ -1,9 +1,11 @@
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
+import { TimeSpan } from "lucia";
 import cryto from "node:crypto";
+import type { TimeSpanUnit } from "oslo";
 import { db } from "~/db";
-import { eventTable } from "~/db/schema";
+import { eventTable, webhookRequestTable } from "~/db/schema";
 import { env } from "~/lib/env";
 import { updateEvent } from "~/services/event";
 import {
@@ -11,6 +13,10 @@ import {
   updateWebhookRequest,
 } from "~/services/webhook-request";
 import { runWebhookRequest } from "~/trigger/run-webhook-request-task";
+import type {
+  InternalEvent,
+  InternalWebhookRequestEventData,
+} from "~/types/internal-event";
 
 const app = new Hono();
 
@@ -37,7 +43,7 @@ app.post("/internal", async (c) => {
   const signature = c.req.header("Signature");
   if (!signature) throw new HTTPException(403);
 
-  const body = await c.req.json();
+  const body = (await c.req.json()) satisfies InternalEvent;
 
   /**
    * Compute signature
@@ -59,7 +65,7 @@ app.post("/internal", async (c) => {
    * On success
    */
   if (event === "webhook_request.succeeded") {
-    const webhookRequest = body.data;
+    const webhookRequest = body.data as InternalWebhookRequestEventData;
 
     console.log(`[WEBHOOK] ${webhookRequest.id} succeeded`);
 
@@ -92,7 +98,7 @@ app.post("/internal", async (c) => {
    * On error
    */
   if (event === "webhook_request.failed") {
-    const webhookRequest = body.data;
+    const webhookRequest = body.data as InternalWebhookRequestEventData;
 
     console.log(
       `[WEBHOOK] ${webhookRequest.eventId} - ${webhookRequest.id} failed`
@@ -118,7 +124,7 @@ app.post("/internal", async (c) => {
     /**
      * Handle retry
      */
-    const retry = body.data.retry;
+    const retry = webhookRequest.retry;
 
     /**
      * If retry left retry else set event status to NOT_DELIVERED
@@ -134,12 +140,25 @@ app.post("/internal", async (c) => {
 
       if (!event) throw new HTTPException(404);
 
-      const newWebhookRequest = await createWebhookRequest(event.id);
+      /**
+       * Create new webhook request
+       */
+      const unit = delay[delay.length - 1] as TimeSpanUnit;
+      const amount = parseInt(delay.slice(0, delay.length - 1));
+
+      const scheduledFor = new Date(
+        Date.now() + new TimeSpan(amount, unit).milliseconds()
+      );
+
+      const newWebhookRequest = await createWebhookRequest(
+        event.id,
+        scheduledFor
+      );
 
       /**
        * Schedule task
        */
-      await runWebhookRequest.trigger(
+      const { id: runId } = (await runWebhookRequest.trigger(
         {
           url: event.webhookUrl,
           secret: event.webhookSecret,
@@ -149,7 +168,17 @@ app.post("/internal", async (c) => {
           retry: retry + 1,
         },
         { delay }
-      );
+      )) as unknown as { id: string };
+
+      /**
+       * Update run ID
+       */
+      await db
+        .update(webhookRequestTable)
+        .set({
+          runId,
+        })
+        .where(eq(webhookRequestTable.id, newWebhookRequest.id));
     } else {
       console.log(`[WEBHOOK] ${webhookRequest.eventId} not delivered`);
 
