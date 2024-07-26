@@ -103,7 +103,7 @@ app.get("/redirect", async (c) => {
     /**
      * Account doesn't exists and User doesn't exists -> create User and Account -> log in
      */
-    const createdUser = await createUserWithoutPassword(githubUser.id);
+    const createdUser = await createUserWithoutPassword(email.email);
     await createAccount(githubUser.id, "GITHUB", createdUser.id);
 
     await setSession(c, createdUser.id);

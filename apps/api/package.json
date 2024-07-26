@@ -30,6 +30,8 @@
   "scripts": {
     "dev": "bun run --hot src/index.ts",
     "db:push": "bun drizzle-kit push",
-    "db:studio": "bun drizzle-kit studio"
+    "db:studio": "bun drizzle-kit studio",
+    "trigger:dev": "bunx trigger.dev@beta dev",
+    "trigger:deploy": "bunx trigger.dev@beta deploy --skip-typecheck"
   }
 }
