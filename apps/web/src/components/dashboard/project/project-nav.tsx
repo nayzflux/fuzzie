@@ -17,6 +17,10 @@ const routes = [
     href: "/app/[projectId]/keys",
     label: "API Keys",
   },
+  {
+    href: "/app/[projectId]/settings",
+    label: "Settings",
+  },
 ];
 
 export default function ProjectNav() {
