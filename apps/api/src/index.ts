@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { env } from "~/lib/env";
 import auth from "~/routes/auth";
+import events from "~/routes/events";
 import projects from "~/routes/projects";
 import users from "~/routes/users";
 import webhook from "~/routes/webhook";
@@ -25,6 +26,7 @@ app.use(
 app.route("/auth", auth);
 app.route("/users", users);
 app.route("/projects", projects);
+app.route("/events", events);
 app.route("/webhook", webhook);
 
 /**

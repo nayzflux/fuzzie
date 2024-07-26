@@ -7,7 +7,7 @@ export default function EventStatusBadge({ status }: { status: EventStatus }) {
       className={cn(
         "px-2 py-1 rounded bg-opacity-30 text-xs",
         (status === "TRIGGERED" || status === "REPLAYED") &&
-          "bg-blue-600 text-blue-6500 border-blue-500",
+          "bg-blue-600 text-blue-600 border-blue-500",
         status === "NOT_DELIVERED" && "bg-red-600 text-red-500 ",
         status === "DELIVERED" && "bg-green-600 text-green-500"
       )}

@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { db } from "~/db";
-import { eventTable, type Event } from "~/db/schema";
+import { eventTable, webhookRequestTable, type Event } from "~/db/schema";
 import { newId } from "~/lib/nanoid";
 
 export const createEvent = async (
@@ -35,3 +35,28 @@ export const createEvent = async (
 
 export const updateEvent = async (id: string, values: Partial<Event>) =>
   await db.update(eventTable).set(values).where(eq(eventTable.id, id));
+
+export const getEventWithProject = async (id: string) =>
+  db.query.events.findFirst({
+    where: eq(eventTable.id, id),
+    with: {
+      project: true,
+    },
+    columns: {
+      webhookSecret: false,
+    },
+  });
+
+export const getEventWithProjectAndWebhookRequests = async (id: string) =>
+  db.query.events.findFirst({
+    where: eq(eventTable.id, id),
+    with: {
+      project: true,
+      webhookRequests: {
+        orderBy: desc(webhookRequestTable.createdAt),
+      },
+    },
+    columns: {
+      webhookSecret: false,
+    },
+  });

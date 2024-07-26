@@ -11,6 +11,8 @@ import {
   projectTable,
   sessionTable,
   userTable,
+  webhookRequestRelations,
+  webhookRequestTable,
 } from "./schema";
 
 const client = createClient({
@@ -25,8 +27,10 @@ export const db = drizzle(client, {
     projects: projectTable,
     apiKeys: apiKeyTable,
     events: eventTable,
+    webhookRequests: webhookRequestTable,
     apiKeyRelations,
     projectRelations,
     eventRelations,
+    webhookRequestRelations,
   },
 });

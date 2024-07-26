@@ -132,11 +132,12 @@ export const eventTable = sqliteTable("events", {
 export type NewEvent = InferInsertModel<typeof eventTable>;
 export type Event = InferSelectModel<typeof eventTable>;
 
-export const eventRelations = relations(eventTable, ({ one }) => ({
+export const eventRelations = relations(eventTable, ({ one, many }) => ({
   project: one(projectTable, {
     fields: [eventTable.projectId],
     references: [projectTable.id],
   }),
+  webhookRequests: many(webhookRequestTable),
 }));
 
 /**
@@ -167,6 +168,16 @@ export const webhookRequestTable = sqliteTable("webhook_requests", {
       onUpdate: "cascade",
     }),
 });
+
+export const webhookRequestRelations = relations(
+  webhookRequestTable,
+  ({ one }) => ({
+    eventId: one(eventTable, {
+      fields: [webhookRequestTable.eventId],
+      references: [eventTable.id],
+    }),
+  })
+);
 
 export type NewWebhookRequest = InferInsertModel<typeof webhookRequestTable>;
 export type WebhookRequest = InferSelectModel<typeof webhookRequestTable>;

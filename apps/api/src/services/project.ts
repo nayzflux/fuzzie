@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { db } from "~/db";
-import { projectTable, type Project } from "~/db/schema";
+import { eventTable, projectTable, type Project } from "~/db/schema";
 import { newId } from "~/lib/nanoid";
 
 export const createProject = async (name: string, userId: string) => {
@@ -92,6 +92,7 @@ export const getProjectEvents = async (projectId: string) =>
           data: false,
           webhookSecret: false,
         },
+        orderBy: desc(eventTable.createdAt),
       },
     },
   });

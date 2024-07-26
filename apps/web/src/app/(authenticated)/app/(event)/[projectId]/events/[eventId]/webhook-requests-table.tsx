@@ -4,7 +4,6 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import Link from "next/link";
 import { Badge } from "~/components/ui/badge";
 import {
   Table,
@@ -14,31 +13,37 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
-import { PartialEvent } from "~/types/event";
-import EventStatusBadge from "./event-status-badge";
+import { PartialWebhookRequest } from "~/types/webhook-request";
+import WebhookRequestStatusBadge from "./webhook-request-status-badge";
 
-export const columns: ColumnDef<PartialEvent>[] = [
+export const columns: ColumnDef<PartialWebhookRequest>[] = [
   {
     accessorKey: "status",
     header: "Status",
-    cell: ({ row }) => <EventStatusBadge status={row.original.status} />,
-  },
-  {
-    accessorKey: "name",
-    header: "Name",
     cell: ({ row }) => (
-      <Link
-        href={`/app/${row.original.projectId}/events/${row.original.id}`}
-        className="font-medium underline cursor-pointer"
-      >
-        {row.original.name}
-      </Link>
+      <WebhookRequestStatusBadge status={row.original.status} />
     ),
   },
   {
     accessorKey: "id",
     header: "ID",
     cell: ({ row }) => <Badge variant="outline">{row.original.id}</Badge>,
+  },
+  {
+    accessorKey: "sentAt",
+    header: "Sent At",
+    cell: ({ row }) => (
+      <div>
+        {row.original.sentAt ? (
+          <>
+            {new Date(row.original.sentAt).toLocaleDateString()}{" "}
+            {new Date(row.original.sentAt).toLocaleTimeString()}
+          </>
+        ) : (
+          "Not sent yet"
+        )}
+      </div>
+    ),
   },
   {
     accessorKey: "createdAt",
@@ -52,7 +57,11 @@ export const columns: ColumnDef<PartialEvent>[] = [
   },
 ];
 
-export default function EventsTable({ events }: { events: PartialEvent[] }) {
+export default function RequestsTable({
+  events,
+}: {
+  events: PartialWebhookRequest[];
+}) {
   const table = useReactTable({
     data: events,
     columns,
