@@ -2,7 +2,14 @@
 
 import UpdateEmailForm from "~/components/account/update-email-form";
 import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
 import { useCurrentUser } from "~/hooks/use-current-user";
 
@@ -53,6 +60,22 @@ export default function AccountPage() {
             <UpdateEmailForm user={user} />
           )}
         </CardContent>
+      </Card>
+
+      {/* Delete Account */}
+      <Card className="border-red-600">
+        <CardHeader>
+          <CardTitle>Delete your account</CardTitle>
+          <CardDescription>
+            This will delete your account and related data from our server
+          </CardDescription>
+        </CardHeader>
+
+        <CardFooter className="border-t border-red-600 pt-6">
+          <Button className="ml-auto" variant="destructive">
+            Delete account
+          </Button>
+        </CardFooter>
       </Card>
     </div>
   );

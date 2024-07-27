@@ -20,10 +20,9 @@ import { useProjects } from "~/hooks/use-projects";
 export default function ProjectItem() {
   const params = useParams() as { projectId?: string };
   const { push } = useRouter();
+  const { data: projects, isPending } = useProjects();
 
   if (!params.projectId) return null;
-
-  const { data: projects, isPending } = useProjects();
 
   return (
     <>
@@ -37,7 +36,7 @@ export default function ProjectItem() {
         ) : (
           <BreadcrumbPage>
             <Select
-              value={params.projectId}
+              defaultValue={params.projectId}
               onValueChange={(id) => push(`/app/${id}`)}
             >
               <SelectTrigger className="border-none">

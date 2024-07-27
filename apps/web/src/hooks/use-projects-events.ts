@@ -10,4 +10,5 @@ export const useProjectEvents = (projectId: string) =>
       const events = (await res.json()) satisfies PartialEvent[];
       return events;
     },
+    refetchInterval: 30 * 1000,
   });

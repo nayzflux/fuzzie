@@ -65,17 +65,17 @@ export default function AccountDropdown() {
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem>
+        <DropdownMenuItem className="cursor-pointer" asChild>
           <Link href="/account">Account</Link>
         </DropdownMenuItem>
 
-        <DropdownMenuItem>
+        <DropdownMenuItem className="cursor-pointer" asChild>
           <Link href="/account/subscription">Subscription</Link>
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem>
+        <DropdownMenuItem className="cursor-pointer" asChild>
           <Link href="/docs">Docs</Link>
         </DropdownMenuItem>
 

@@ -4,10 +4,12 @@ import { HTTPException } from "hono/http-exception";
 import { TimeSpan } from "lucia";
 import cryto from "node:crypto";
 import type { TimeSpanUnit } from "oslo";
+import stripe from "stripe";
 import { db } from "~/db";
 import { eventTable, webhookRequestTable } from "~/db/schema";
 import { env } from "~/lib/env";
 import { updateEvent } from "~/services/event";
+import { updateUser, updateUserBySubscriptionId } from "~/services/user";
 import {
   createWebhookRequest,
   updateWebhookRequest,
@@ -189,6 +191,57 @@ app.post("/internal", async (c) => {
     }
 
     return c.json({}, 200);
+  }
+
+  return c.json({}, 200);
+});
+
+app.post("/stripe", async (c) => {
+  const signature = c.req.header("stripe-signature");
+
+  if (!signature) {
+    throw new HTTPException(400);
+  }
+
+  const body = await c.req.text();
+  const event = await stripe.webhooks.constructEventAsync(
+    body,
+    signature,
+    env.STRIPE_WEBHOOK_SECRET
+  );
+
+  /**
+   * When user subscribe
+   */
+  if (event.type === "checkout.session.completed") {
+    const { planId, userId } = event.data.object.metadata as {
+      planId: "PRO";
+      userId: string;
+    };
+    const subscriptionId = event.data.object.subscription as string;
+
+    /**
+     * Set user plan
+     */
+    await updateUser(userId, {
+      plan: planId,
+      stripeSubscriptionId: subscriptionId,
+    });
+
+    console.log(`[STRIPE] ${userId} subscribed to ${planId}`);
+  }
+
+  /**
+   * When subscription expired or canceled
+   */
+  if (event.type === "customer.subscription.deleted") {
+    const subscriptionId = event.data.object.id;
+
+    /**
+     * Revoke user plan
+     */
+    await updateUserBySubscriptionId(subscriptionId, { plan: "FREE" });
+    console.log(`[STRIPE] ${subscriptionId} unsubscribed`);
   }
 
   return c.json({}, 200);

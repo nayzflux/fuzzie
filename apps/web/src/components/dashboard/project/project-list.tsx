@@ -44,7 +44,7 @@ export default function ProjectList() {
       <Card className="flex flex-col items-center justify-center p-4 h-[600px] gap-8">
         <div className="flex flex-col items-center gap-2">
           <p className="text-2xl font-semibold">
-            You don't have any projects yet.
+            You don&apos;t have any projects yet.
           </p>
           <p className="text-muted-foreground">
             Start by creating a new project.
@@ -59,7 +59,7 @@ export default function ProjectList() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-8">
       {projects?.map((project) => (
-        <ProjectCard project={project} />
+        <ProjectCard key={project.id} project={project} />
       ))}
     </div>
   );

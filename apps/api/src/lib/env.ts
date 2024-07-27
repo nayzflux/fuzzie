@@ -32,6 +32,11 @@ export const env = createEnv({
 
     // Trigger
     TRIGGER_SECRET_KEY: z.string(),
+
+    // Stripe
+    STRIPE_API_KEY: z.string(),
+    STRIPE_PRO_PLAN_ID: z.string(),
+    STRIPE_WEBHOOK_SECRET: z.string(),
   },
 
   /**

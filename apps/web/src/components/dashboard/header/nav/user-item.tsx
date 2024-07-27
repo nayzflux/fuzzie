@@ -4,7 +4,7 @@ import { Slash } from "lucide-react";
 import Link from "next/link";
 import {
   BreadcrumbItem,
-  BreadcrumbLink,
+  BreadcrumbPage,
   BreadcrumbSeparator,
 } from "~/components/ui/breadcrumb";
 import { Skeleton } from "~/components/ui/skeleton";
@@ -24,7 +24,7 @@ export default function UserItem() {
         {isPending ? (
           <Skeleton className="size-6 rounded-full sm:rounded-lg sm:w-60 h-5" />
         ) : (
-          <BreadcrumbLink>
+          <BreadcrumbPage>
             <Link
               href="/app"
               className="flex items-center text-muted-foreground"
@@ -38,7 +38,7 @@ export default function UserItem() {
 
               <p className="hidden sm:inline">{user?.email}</p>
             </Link>
-          </BreadcrumbLink>
+          </BreadcrumbPage>
         )}
       </BreadcrumbItem>
     </>

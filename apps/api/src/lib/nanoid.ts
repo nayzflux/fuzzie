@@ -5,7 +5,7 @@ export const nanoid = customAlphabet(
   12
 );
 
-export const newId = (prefix: "u" | "p" | "e" | "wh_req" | string) => {
+export const newId = (prefix: "u" | "p" | "e" | "wh_req" | "key") => {
   const id = nanoid();
   return [prefix, id].join("_");
 };

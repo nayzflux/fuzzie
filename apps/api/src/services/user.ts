@@ -2,6 +2,7 @@ import { and, eq } from "drizzle-orm";
 import { db } from "~/db";
 import { userTable, type User } from "~/db/schema";
 import { newId } from "~/lib/nanoid";
+import { stripe } from "~/lib/stripe";
 import { createHash } from "~/utils/password";
 
 export const createUser = async (email: string, password: string) => {
@@ -12,6 +13,16 @@ export const createUser = async (email: string, password: string) => {
   // Get current date
   const createdAt = new Date();
 
+  /**
+   * Create stripe customer
+   */
+  const customer = await stripe.customers.create({
+    email,
+    metadata: {
+      userId: id,
+    },
+  });
+
   const user = await db
     .insert(userTable)
     .values({
@@ -19,6 +30,7 @@ export const createUser = async (email: string, password: string) => {
       email,
       password: hash,
       createdAt,
+      stripeCustomerId: customer.id,
     })
     .returning({
       id: userTable.id,
@@ -52,6 +64,7 @@ export const createUserWithoutPassword = async (email: string) => {
       email: userTable.email,
       isEmailVerified: userTable.isEmailVerified,
       createdAt: userTable.createdAt,
+      plan: userTable.plan,
     })
     .get();
 
@@ -63,6 +76,10 @@ export const createUserWithoutPassword = async (email: string) => {
 export const getUserWithPassword = async (email: string) => {
   return await db.query.users.findFirst({
     where: eq(userTable.email, email),
+    columns: {
+      stripeCustomerId: false,
+      stripeSubscriptionId: false,
+    },
   });
 };
 
@@ -71,6 +88,8 @@ export const getUser = async (id: string) => {
     where: eq(userTable.id, id),
     columns: {
       password: false,
+      stripeCustomerId: false,
+      stripeSubscriptionId: false,
     },
   });
 };
@@ -91,6 +110,7 @@ export const setUserEmailVerification = async (
       email: userTable.email,
       isEmailVerified: userTable.isEmailVerified,
       createdAt: userTable.createdAt,
+      plan: userTable.plan,
     })
     .get();
 };
@@ -105,6 +125,27 @@ export const updateUser = async (userId: string, values: Partial<User>) => {
       email: userTable.email,
       isEmailVerified: userTable.isEmailVerified,
       createdAt: userTable.createdAt,
+      plan: userTable.plan,
+    })
+    .get();
+
+  return user;
+};
+
+export const updateUserBySubscriptionId = async (
+  subscriptionId: string,
+  values: Partial<User>
+) => {
+  const user = await db
+    .update(userTable)
+    .set(values)
+    .where(eq(userTable.stripeSubscriptionId, subscriptionId))
+    .returning({
+      id: userTable.id,
+      email: userTable.email,
+      isEmailVerified: userTable.isEmailVerified,
+      createdAt: userTable.createdAt,
+      plan: userTable.plan,
     })
     .get();
 
@@ -120,6 +161,7 @@ export const deleteUser = async (userId: string) => {
       email: userTable.email,
       isEmailVerified: userTable.isEmailVerified,
       createdAt: userTable.createdAt,
+      plan: userTable.plan,
     })
     .get();
 

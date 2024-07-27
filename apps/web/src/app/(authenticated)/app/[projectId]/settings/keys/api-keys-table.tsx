@@ -1,11 +1,18 @@
+import { EllipsisHorizontalIcon } from "@heroicons/react/24/outline";
 import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import Link from "next/link";
 import { Badge } from "~/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -15,26 +22,14 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import { formatDateTimeLong } from "~/lib/format";
-import { PartialEvent } from "~/types/event";
-import EventStatusBadge from "./event-status-badge";
+import { ApiKey } from "~/types/api-key";
+import RevokeApiKeyDialog from "./revoke-api-key-dialog";
 
-export const columns: ColumnDef<PartialEvent>[] = [
-  {
-    accessorKey: "status",
-    header: "Status",
-    cell: ({ row }) => <EventStatusBadge status={row.original.status} />,
-  },
+export const columns: ColumnDef<ApiKey>[] = [
   {
     accessorKey: "name",
     header: "Name",
-    cell: ({ row }) => (
-      <Link
-        href={`/app/${row.original.projectId}/events/${row.original.id}`}
-        className="font-medium underline cursor-pointer"
-      >
-        {row.original.name}
-      </Link>
-    ),
+    cell: ({ row }) => <div className="font-medium">{row.original.name}</div>,
   },
   {
     accessorKey: "id",
@@ -46,11 +41,28 @@ export const columns: ColumnDef<PartialEvent>[] = [
     header: "Created At",
     cell: ({ row }) => <div>{formatDateTimeLong(row.original.createdAt)}</div>,
   },
+  {
+    id: "action",
+    cell: ({ row }) => (
+      <DropdownMenu>
+        <DropdownMenuTrigger>
+          <EllipsisHorizontalIcon className="size-4" />
+        </DropdownMenuTrigger>
+
+        <DropdownMenuContent>
+          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+            <RevokeApiKeyDialog apiKeyId={row.original.id} />
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    ),
+  },
 ];
 
-export default function EventsTable({ events }: { events: PartialEvent[] }) {
+export default function ApiKeysTable({ apikeys }: { apikeys: ApiKey[] }) {
   const table = useReactTable({
-    data: events,
+    data: apikeys,
     columns,
     getCoreRowModel: getCoreRowModel(),
   });

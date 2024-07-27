@@ -6,12 +6,13 @@ import { z } from "zod";
 import { db } from "~/db";
 import { webhookRequestTable } from "~/db/schema";
 import { env } from "~/lib/env";
-import { getApiKeyWithProject } from "~/services/api-keys";
 import { createEvent } from "~/services/event";
+import { createApiKey, getApiKeyWithProject } from "~/services/keys";
 import {
   createProject,
   deleteProject,
   getProject,
+  getProjectApiKeys,
   getProjectEvents,
   getUserProjects,
   updateProject,
@@ -280,6 +281,78 @@ app.get("/:projectId/events", async (c) => {
   if (project.userId !== session.user.id) throw new HTTPException(403);
 
   return c.json(project.events);
+});
+
+/**
+ * Create project API key
+ */
+const createApiKeyBody = z.object({
+  name: z.string().min(1).max(32),
+});
+
+app.post(
+  "/:projectId/keys",
+  zValidator("json", createApiKeyBody),
+  async (c) => {
+    /**
+     * Authentication
+     */
+    const session = await getSession(c);
+    if (!session) throw new HTTPException(401);
+
+    const { projectId } = c.req.param();
+
+    /**
+     * Get project
+     */
+    const project = await getProject(projectId);
+
+    /**
+     * If project doesn't exists
+     */
+    if (!project) throw new HTTPException(404);
+
+    /**
+     * Authorization
+     */
+    if (project.userId !== session.user.id) throw new HTTPException(403);
+
+    const { name } = c.req.valid("json");
+
+    const apiKey = await createApiKey(name, project.id);
+
+    return c.json(apiKey, 201);
+  }
+);
+
+/**
+ * Get project API keys
+ */
+app.get("/:projectId/keys", async (c) => {
+  /**
+   * Authentication
+   */
+  const session = await getSession(c);
+  if (!session) throw new HTTPException(401);
+
+  const { projectId } = c.req.param();
+
+  /**
+   * Get project
+   */
+  const project = await getProjectApiKeys(projectId);
+
+  /**
+   * If project doesn't exists
+   */
+  if (!project) throw new HTTPException(404);
+
+  /**
+   * Authorization
+   */
+  if (project.userId !== session.user.id) throw new HTTPException(403);
+
+  return c.json(project.apiKeys);
 });
 
 export default app;

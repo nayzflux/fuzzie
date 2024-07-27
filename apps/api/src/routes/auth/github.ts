@@ -85,7 +85,7 @@ app.get("/redirect", async (c) => {
 
     if (account) {
       await setSession(c, account.userId);
-      return c.redirect(`${env.CLIENT_URL}/dashboard`);
+      return c.redirect(`${env.CLIENT_URL}/app`);
     }
 
     /**
@@ -97,7 +97,7 @@ app.get("/redirect", async (c) => {
       await createAccount(githubUser.id, "GITHUB", user.id);
 
       await setSession(c, user.id);
-      return c.redirect(`${env.CLIENT_URL}/dashboard`);
+      return c.redirect(`${env.CLIENT_URL}/app`);
     }
 
     /**
@@ -107,7 +107,7 @@ app.get("/redirect", async (c) => {
     await createAccount(githubUser.id, "GITHUB", createdUser.id);
 
     await setSession(c, createdUser.id);
-    return c.redirect(`${env.CLIENT_URL}/dashboard`);
+    return c.redirect(`${env.CLIENT_URL}/app`);
   } catch (e) {
     if (
       e instanceof OAuth2RequestError &&

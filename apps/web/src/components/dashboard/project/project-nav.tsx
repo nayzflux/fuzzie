@@ -14,11 +14,8 @@ const routes = [
     label: "Events",
   },
   {
-    href: "/app/[projectId]/keys",
-    label: "API Keys",
-  },
-  {
     href: "/app/[projectId]/settings",
+    href2: "/app/[projectId]/settings/keys",
     label: "Settings",
   },
 ];
@@ -30,13 +27,15 @@ export default function ProjectNav() {
   return (
     <nav>
       <ul className="flex px-4 sm:px-16 lg:px-32 xl:px-64 2xl:px-96">
-        {routes.map(({ href, label }) => (
+        {routes.map(({ href, href2, label }) => (
           <Link key={href} href={href.replace("[projectId]", projectId)}>
             <li
               key={href}
               className={cn(
                 "p-4 text-sm",
-                pathname === href.replace("[projectId]", projectId) &&
+                (pathname === href.replace("[projectId]", projectId) ||
+                  (href2 &&
+                    pathname === href2.replace("[projectId]", projectId))) &&
                   "border-b border-white cursor-pointer"
               )}
             >

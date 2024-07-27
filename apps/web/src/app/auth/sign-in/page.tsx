@@ -11,7 +11,7 @@ export default function SignInPage() {
         <p className="text-muted-foreground">
           Access your Fuzzie dashboard and take control of your integrations.{" "}
           <Link href="/auth/sign-up" className="underline">
-            I don't have an account
+            I don&apos;t have an account
           </Link>
         </p>
       </div>

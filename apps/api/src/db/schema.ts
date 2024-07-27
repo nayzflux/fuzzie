@@ -21,6 +21,9 @@ export const userTable = sqliteTable("users", {
   email: text("email").notNull().unique(),
   password: text("password"),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  plan: text("plan", {enum: ["FREE", "PRO"]}).default("FREE"),
+  stripeCustomerId: text("stripe_customer_id"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
 });
 
 export type NewUser = InferInsertModel<typeof userTable>;
@@ -83,6 +86,7 @@ export type Project = InferSelectModel<typeof projectTable>;
 
 export const projectRelations = relations(projectTable, ({ many }) => ({
   events: many(eventTable),
+  apiKeys: many(apiKeyTable),
 }));
 
 /**
