@@ -4,10 +4,10 @@ import { HTTPException } from "hono/http-exception";
 import { TimeSpan } from "lucia";
 import cryto from "node:crypto";
 import type { TimeSpanUnit } from "oslo";
-import stripe from "stripe";
 import { db } from "~/db";
 import { eventTable, webhookRequestTable } from "~/db/schema";
 import { env } from "~/lib/env";
+import { stripe } from "~/lib/stripe";
 import { updateEvent } from "~/services/event";
 import { updateUser, updateUserBySubscriptionId } from "~/services/user";
 import {

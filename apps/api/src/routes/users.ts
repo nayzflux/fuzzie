@@ -2,7 +2,14 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
-import { deleteUser, getUser, updateUser } from "~/services/user";
+import { env } from "~/lib/env";
+import { stripe } from "~/lib/stripe";
+import {
+  deleteUser,
+  getUser,
+  getUserWithStripeInfo,
+  updateUser,
+} from "~/services/user";
 import { sendEmailVerificationLink } from "~/utils/email";
 import { getSession } from "~/utils/session";
 
@@ -81,6 +88,35 @@ app.delete("/:userId", async (c) => {
   const user = await deleteUser(userId);
 
   return c.json(user);
+});
+
+/**
+ * Access to customer portal
+ */
+app.get("/:userId/customer-portal", async (c) => {
+  /**
+   * Authentication
+   */
+  const session = await getSession(c);
+  if (!session) throw new HTTPException(401);
+
+  const userId = c.req.param("userId");
+
+  /**
+   * Authorization
+   */
+  if (session.user.id !== userId) throw new HTTPException(403);
+
+  const user = await getUserWithStripeInfo(session.user.id);
+
+  if (!user?.stripeCustomerId) throw new HTTPException(404);
+
+  const portal = await stripe.billingPortal.sessions.create({
+    customer: user.stripeCustomerId,
+    return_url: `${env.CLIENT_URL}/account/subscription`,
+  });
+
+  return c.redirect(portal.url);
 });
 
 export default app;

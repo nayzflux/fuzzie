@@ -93,6 +93,14 @@ export const getUser = async (id: string) => {
     },
   });
 };
+export const getUserWithStripeInfo = async (id: string) => {
+  return await db.query.users.findFirst({
+    where: eq(userTable.id, id),
+    columns: {
+      password: false,
+    },
+  });
+};
 
 export const setUserEmailVerification = async (
   id: string,
@@ -167,3 +175,4 @@ export const deleteUser = async (userId: string) => {
 
   return user;
 };
+

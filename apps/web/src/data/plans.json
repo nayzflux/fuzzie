@@ -1,0 +1,14 @@
+[
+  {
+    "id": "FREE",
+    "label": "Free Tier",
+    "price": 0,
+    "isPremium": false
+  },
+  {
+    "id": "PRO",
+    "label": "Pro Tier",
+    "price": 25,
+    "isPremium": true
+  }
+]
