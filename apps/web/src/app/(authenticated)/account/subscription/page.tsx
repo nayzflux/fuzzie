@@ -117,7 +117,7 @@ export default function SubscriptionPage() {
             </CardDescription>
           </CardHeader>
 
-          <CardFooter>
+          <CardFooter className="border-t border-red-500 pt-6">
             <Button className="ml-auto" variant="destructive" asChild>
               <Link
                 href={`${process.env.API_URL!}/users/${
