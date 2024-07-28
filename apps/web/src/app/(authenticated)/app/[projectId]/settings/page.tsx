@@ -12,6 +12,7 @@ import {
 } from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
 import { useProject } from "~/hooks/use-project";
+import DeleteProjectDialog from "./delete-project-dialog";
 import UpdateProjectNameForm from "./update-project-name-form";
 
 export default function SettingsPage() {
@@ -51,9 +52,9 @@ export default function SettingsPage() {
         </CardHeader>
 
         <CardFooter className="border-t border-red-600 pt-6">
-          <Button className="ml-auto" variant="destructive">
-            Delete project
-          </Button>
+          <div className="ml-auto">
+            <DeleteProjectDialog />
+          </div>
         </CardFooter>
       </Card>
     </div>
