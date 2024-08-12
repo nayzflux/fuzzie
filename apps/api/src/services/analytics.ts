@@ -9,9 +9,25 @@ export const getMonthlyTriggeredEventCount = async (projectId: string) => {
   const firstDay = new Date(y, m, 1);
   const lastDay = new Date(y, m + 1, 0);
 
+  const query = sql`SELECT COUNT(*) FROM ${eventTable} WHERE ${
+    eventTable.projectId
+  } = ${projectId} AND created_at BETWEEN ${firstDay.getTime()} AND ${lastDay.getTime()} GROUP BY bucket`;
+
+  return await db.all(query);
+};
+
+export const getTriggeredEventTimeseries = async (projectId: string) => {
+  const date = new Date(),
+    y = date.getFullYear(),
+    m = date.getMonth();
+  const firstDay = new Date(y, m, 1);
+  const lastDay = new Date(y, m + 1, 0);
+
   const query = sql`SELECT COUNT(*) AS triggered, ${
     eventTable.createdAt
-  } AS bucket FROM ${eventTable} WHERE ${
+  } AS datetime, FLOOR(${
+    eventTable.createdAt
+  } / (24 * 60 * 60 * 1000)) AS bucket FROM ${eventTable} WHERE ${
     eventTable.projectId
   } = ${projectId} AND created_at BETWEEN ${firstDay.getTime()} AND ${lastDay.getTime()} GROUP BY bucket`;
 

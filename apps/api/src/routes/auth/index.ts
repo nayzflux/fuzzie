@@ -17,8 +17,6 @@ import { revokeSession, setSession } from "~/utils/session";
 
 const app = new Hono();
 
-// TODO: Ratelimit
-
 /**
  * Email / Password
  */
