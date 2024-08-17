@@ -1,10 +1,10 @@
 import { zValidator } from "@hono/zod-validator";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { db } from "~/db";
-import { webhookRequestTable } from "~/db/schema";
+import { userTable, webhookRequestTable } from "~/db/schema";
 import { env } from "~/lib/env";
 import { createEvent } from "~/services/event";
 import { createApiKey, getApiKeyWithProject } from "~/services/keys";
@@ -21,6 +21,7 @@ import { createWebhookRequest } from "~/services/webhook-request";
 import { runWebhookRequest } from "~/trigger/run-webhook-request-task";
 import { encrypt } from "~/utils/encryption";
 import { getSession } from "~/utils/session";
+import { isUsageValid } from "~/utils/usage";
 
 const app = new Hono();
 
@@ -205,6 +206,11 @@ app.post(
     if (projectId !== key.project.id) throw new HTTPException(403);
 
     /**
+     * Check usage
+     */
+    if (!isUsageValid(key.project.user)) throw new HTTPException(422);
+
+    /**
      * Encrypt webhook secret using AES-256 GCM
      */
     const encryptedWebhookSecret = encrypt(
@@ -248,6 +254,17 @@ app.post(
         runId,
       })
       .where(eq(webhookRequestTable.id, webhookRequest.id));
+
+    /**
+     * Increment usage
+     */
+    await db
+      .update(userTable)
+      .set({
+        eventUsageCount: sql`${userTable.eventUsageCount} + 1`,
+        webhookRequestUsageCount: sql`${userTable.webhookRequestUsageCount} + 1`,
+      })
+      .where(eq(userTable.id, key.project.userId));
 
     return c.json(event, 201);
   }

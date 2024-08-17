@@ -37,7 +37,17 @@ export const getApiKeyWithProject = async (key: string) => {
       key: false,
     },
     with: {
-      project: true,
+      project: {
+        with: {
+          user: {
+            columns: {
+              plan: true,
+              eventUsageCount: true,
+              webhookRequestUsageCount: true,
+            },
+          },
+        },
+      },
     },
   });
 

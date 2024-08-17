@@ -51,7 +51,17 @@ export const getEventWithProjectAndWebhookSecret = async (id: string) =>
   db.query.events.findFirst({
     where: eq(eventTable.id, id),
     with: {
-      project: true,
+      project: {
+        with: {
+          user: {
+            columns: {
+              eventUsageCount: true,
+              webhookRequestUsageCount: true,
+              plan: true,
+            },
+          },
+        },
+      },
     },
   });
 

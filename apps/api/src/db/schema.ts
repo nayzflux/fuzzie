@@ -21,9 +21,21 @@ export const userTable = sqliteTable("users", {
   email: text("email").notNull().unique(),
   password: text("password"),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
-  plan: text("plan", {enum: ["FREE", "PRO"]}).default("FREE"),
-  stripeCustomerId: text("stripe_customer_id"),
-  stripeSubscriptionId: text("stripe_subscription_id"),
+  // Subscription
+  plan: text("plan", { enum: ["FREE", "PRO"] })
+    .default("FREE")
+    .notNull(),
+  stripeCustomerId: text("stripe_customer_id").notNull(),
+  stripeSubscriptionId: text("stripe_subscription_id").notNull(),
+  // Usage
+  eventUsageCount: integer("event_usage_count", { mode: "number" })
+    .default(0)
+    .notNull(),
+  webhookRequestUsageCount: integer("webhook_request_usage_count", {
+    mode: "number",
+  })
+    .default(0)
+    .notNull(),
 });
 
 export type NewUser = InferInsertModel<typeof userTable>;
@@ -84,7 +96,11 @@ export const projectTable = sqliteTable("project", {
 export type NewProject = InferInsertModel<typeof projectTable>;
 export type Project = InferSelectModel<typeof projectTable>;
 
-export const projectRelations = relations(projectTable, ({ many }) => ({
+export const projectRelations = relations(projectTable, ({ one, many }) => ({
+  user: one(userTable, {
+    fields: [projectTable.userId],
+    references: [userTable.id],
+  }),
   events: many(eventTable),
   apiKeys: many(apiKeyTable),
 }));

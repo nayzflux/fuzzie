@@ -1,21 +1,23 @@
 import { runs } from "@trigger.dev/sdk/v3";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { db } from "~/db";
-import { webhookRequestTable } from "~/db/schema";
+import { userTable, webhookRequestTable } from "~/db/schema";
 import {
   getEventWithProject,
   getEventWithProjectAndWebhookRequests,
   getEventWithProjectAndWebhookSecret,
   updateEvent,
 } from "~/services/event";
+import { updateUser } from "~/services/user";
 import {
   createWebhookRequest,
   updateWebhookRequest,
 } from "~/services/webhook-request";
 import { runWebhookRequest } from "~/trigger/run-webhook-request-task";
 import { getSession } from "~/utils/session";
+import { isUsageValid } from "~/utils/usage";
 
 const app = new Hono();
 
@@ -101,6 +103,11 @@ app.post("/:eventId/replay", async (c) => {
   if (event.project.userId !== session.user.id) throw new HTTPException(403);
 
   /**
+   * Check usage
+   */
+  if (!isUsageValid(event.project.user)) throw new HTTPException(422);
+
+  /**
    * If event is not finished cancel any scheduled request
    */
   if (event.status === "TRIGGERED" || event.status === "REPLAYED") {
@@ -149,6 +156,17 @@ app.post("/:eventId/replay", async (c) => {
    * Update run ID
    */
   await updateWebhookRequest(webhookRequest.id, { runId });
+
+  /**
+   * Increment usage
+   */
+  await db
+    .update(userTable)
+    .set({
+      eventUsageCount: sql`${userTable.eventUsageCount} + 1`,
+      webhookRequestUsageCount: sql`${userTable.webhookRequestUsageCount} + 1`,
+    })
+    .where(eq(userTable.id, event.project.userId));
 
   return c.json({
     id: event.id,
