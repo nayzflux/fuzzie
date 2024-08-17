@@ -1,14 +1,17 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { TimeSpan } from "lucia";
 import cryto from "node:crypto";
 import type { TimeSpanUnit } from "oslo";
 import { db } from "~/db";
-import { eventTable, webhookRequestTable } from "~/db/schema";
+import { userTable, webhookRequestTable } from "~/db/schema";
 import { env } from "~/lib/env";
 import { stripe } from "~/lib/stripe";
-import { updateEvent } from "~/services/event";
+import {
+  getEventWithProjectAndWebhookSecret,
+  updateEvent,
+} from "~/services/event";
 import { updateUser, updateUserBySubscriptionId } from "~/services/user";
 import {
   createWebhookRequest,
@@ -19,6 +22,7 @@ import type {
   InternalEvent,
   InternalWebhookRequestEventData,
 } from "~/types/internal-event";
+import { isUsageValid } from "~/utils/usage";
 
 const app = new Hono();
 
@@ -136,11 +140,16 @@ app.post("/internal", async (c) => {
 
       console.log(`[WEBHOOK] ${webhookRequest.eventId} retrying in ${delay}`);
 
-      const event = await db.query.events.findFirst({
-        where: eq(eventTable.id, webhookRequest.eventId),
-      });
+      const event = await getEventWithProjectAndWebhookSecret(
+        webhookRequest.eventId
+      );
 
       if (!event) throw new HTTPException(404);
+
+      /**
+       * Check usage
+       */
+      if (!isUsageValid(event.project.user)) throw new HTTPException(422);
 
       /**
        * Create new webhook request
@@ -181,6 +190,17 @@ app.post("/internal", async (c) => {
           runId,
         })
         .where(eq(webhookRequestTable.id, newWebhookRequest.id));
+
+      /**
+       * Increment usage
+       */
+      await db
+        .update(userTable)
+        .set({
+          eventUsageCount: sql`${userTable.eventUsageCount} + 1`,
+          webhookRequestUsageCount: sql`${userTable.webhookRequestUsageCount} + 1`,
+        })
+        .where(eq(userTable.id, event.project.userId));
     } else {
       console.log(`[WEBHOOK] ${webhookRequest.eventId} not delivered`);
 
