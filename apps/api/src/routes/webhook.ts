@@ -22,7 +22,7 @@ import type {
   InternalEvent,
   InternalWebhookRequestEventData,
 } from "~/types/internal-event";
-import { isUsageValid } from "~/utils/usage";
+import { isWebhookRequestExceeded } from "~/utils/usage";
 
 const app = new Hono();
 
@@ -149,7 +149,8 @@ app.post("/internal", async (c) => {
       /**
        * Check usage
        */
-      if (!isUsageValid(event.project.user)) throw new HTTPException(422);
+      if (isWebhookRequestExceeded(event.project.user))
+        throw new HTTPException(422);
 
       /**
        * Create new webhook request
@@ -197,7 +198,6 @@ app.post("/internal", async (c) => {
       await db
         .update(userTable)
         .set({
-          eventUsageCount: sql`${userTable.eventUsageCount} + 1`,
           webhookRequestUsageCount: sql`${userTable.webhookRequestUsageCount} + 1`,
         })
         .where(eq(userTable.id, event.project.userId));

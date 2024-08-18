@@ -21,7 +21,7 @@ import { createWebhookRequest } from "~/services/webhook-request";
 import { runWebhookRequest } from "~/trigger/run-webhook-request-task";
 import { encrypt } from "~/utils/encryption";
 import { getSession } from "~/utils/session";
-import { isUsageValid } from "~/utils/usage";
+import { isEventExceeded, isWebhookRequestExceeded } from "~/utils/usage";
 
 const app = new Hono();
 
@@ -208,7 +208,8 @@ app.post(
     /**
      * Check usage
      */
-    if (!isUsageValid(key.project.user)) throw new HTTPException(422);
+    if (isEventExceeded(key.project.user)) throw new HTTPException(422);
+    if (isWebhookRequestExceeded(key.project.user)) throw new HTTPException(422);
 
     /**
      * Encrypt webhook secret using AES-256 GCM

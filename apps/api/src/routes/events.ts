@@ -17,7 +17,7 @@ import {
 } from "~/services/webhook-request";
 import { runWebhookRequest } from "~/trigger/run-webhook-request-task";
 import { getSession } from "~/utils/session";
-import { isUsageValid } from "~/utils/usage";
+import { isWebhookRequestExceeded } from "~/utils/usage";
 
 const app = new Hono();
 
@@ -105,7 +105,8 @@ app.post("/:eventId/replay", async (c) => {
   /**
    * Check usage
    */
-  if (!isUsageValid(event.project.user)) throw new HTTPException(422);
+  if (isWebhookRequestExceeded(event.project.user))
+    throw new HTTPException(422);
 
   /**
    * If event is not finished cancel any scheduled request
@@ -163,7 +164,6 @@ app.post("/:eventId/replay", async (c) => {
   await db
     .update(userTable)
     .set({
-      eventUsageCount: sql`${userTable.eventUsageCount} + 1`,
       webhookRequestUsageCount: sql`${userTable.webhookRequestUsageCount} + 1`,
     })
     .where(eq(userTable.id, event.project.userId));

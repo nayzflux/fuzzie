@@ -26,7 +26,7 @@ export const userTable = sqliteTable("users", {
     .default("FREE")
     .notNull(),
   stripeCustomerId: text("stripe_customer_id").notNull(),
-  stripeSubscriptionId: text("stripe_subscription_id").notNull(),
+  stripeSubscriptionId: text("stripe_subscription_id"),
   // Usage
   eventUsageCount: integer("event_usage_count", { mode: "number" })
     .default(0)
