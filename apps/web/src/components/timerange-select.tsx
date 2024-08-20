@@ -41,9 +41,15 @@ const ranges = [
   },
 ];
 
-export default function TimeRangeSelect() {
+export default function TimeRangeSelect({
+  value,
+  onValueChange,
+}: {
+  value: string;
+  onValueChange: (value: string) => void;
+}) {
   return (
-    <Select defaultValue="7d">
+    <Select value={value} onValueChange={onValueChange}>
       <SelectTrigger>
         <SelectValue placeholder="Select timerange" />
       </SelectTrigger>

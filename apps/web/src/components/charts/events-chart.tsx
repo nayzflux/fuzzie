@@ -1,5 +1,6 @@
 "use client";
 
+import dayjs from "dayjs";
 import { Bar, BarChart, CartesianGrid, LabelList, XAxis } from "recharts";
 import { Card } from "~/components/ui/card";
 import {
@@ -8,33 +9,27 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "~/components/ui/chart";
-const chartData = [
-  { month: "January", desktop: 186 },
-  { month: "February", desktop: 305 },
-  { month: "March", desktop: 237 },
-  { month: "April", desktop: 73 },
-  { month: "May", desktop: 209 },
-  { month: "June", desktop: 214 },
-];
 
 const chartConfig = {
-  desktop: {
-    label: "Desktop",
-    color: "hsl(var(--chart-1))",
+  eventCount: {
+    label: "Triggered",
+    color: "#2563eb",
   },
 } satisfies ChartConfig;
 
 export default function EventsChart({
   data,
+  by,
 }: {
-  data: { triggered: number; date: string }[];
+  data: { eventCount: number; datetime: string }[];
+  by: "DAY" | "HOUR" | "MINUTE";
 }) {
   return (
     <Card className="p-6">
       <ChartContainer config={chartConfig}>
         <BarChart
           accessibilityLayer
-          data={chartData}
+          data={data}
           margin={{
             top: 20,
           }}
@@ -42,11 +37,21 @@ export default function EventsChart({
           <CartesianGrid vertical={false} />
 
           <XAxis
-            dataKey="month"
+            dataKey="datetime"
             tickLine={false}
             tickMargin={10}
             axisLine={false}
-            tickFormatter={(value) => value.slice(0, 3)}
+            tickFormatter={(datetime) => {
+              if (by === "MINUTE") {
+                return dayjs(datetime).format("HH:mm");
+              }
+
+              if (by === "HOUR") {
+                return dayjs(datetime).format("HH:00");
+              }
+
+              return dayjs(datetime).format("DD/MM");
+            }}
           />
 
           <ChartTooltip
@@ -54,7 +59,7 @@ export default function EventsChart({
             content={<ChartTooltipContent hideLabel />}
           />
 
-          <Bar dataKey="desktop" fill="var(--color-desktop)" radius={8}>
+          <Bar dataKey="eventCount" fill="var(--color-eventCount)" radius={8}>
             <LabelList
               position="top"
               offset={12}

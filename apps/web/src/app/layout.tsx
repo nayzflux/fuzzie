@@ -4,6 +4,7 @@ import { Toaster } from "~/components/ui/toaster";
 import QueryProvider from "~/providers/query-provider";
 import ThemeProvider from "~/providers/theme-provider";
 import "./globals.css";
+import { cn } from "~/lib/utils";
 
 // const inter = Inter({ subsets: ["latin"] });
 const gabarito = Gabarito({ subsets: ["latin"] });
@@ -20,13 +21,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={gabarito.className}>
+      <body className={cn(gabarito.className, "min-h-screen")}>
         <ThemeProvider>
           <QueryProvider>
             <Toaster />
-            <div className="w-screen min-h-screen overflow-hidden">
-              {children}
-            </div>
+            {children}
           </QueryProvider>
         </ThemeProvider>
       </body>

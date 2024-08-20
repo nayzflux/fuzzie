@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Logo from "~/components/logo";
-import { Button } from "../ui/button";
+import { Button } from "~/components/ui/button";
 
 const routes = [
   {
@@ -19,7 +19,7 @@ const routes = [
 
 export default function Header() {
   return (
-    <header className="sticky top-0 flex gap-16 items-center justify-between px-16 py-8 border-b">
+    <header className="sticky top-0 flex gap-16 items-center justify-between px-16 py-8 border-b backdrop-blur-3xl">
       <Logo className="size-10" />
 
       <nav>
