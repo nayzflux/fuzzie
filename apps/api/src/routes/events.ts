@@ -4,6 +4,7 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { db } from "~/db";
 import { userTable, webhookRequestTable } from "~/db/schema";
+import { newId } from "~/lib/nanoid";
 import {
   getEventWithProject,
   getEventWithProjectAndWebhookRequests,
@@ -130,54 +131,57 @@ app.post("/:eventId/replay", async (c) => {
     }
   }
 
-  /**
-   * Create webhook request and schedule it
-   */
-  const webhookRequest = await createWebhookRequest(event.id, event.projectId, new Date());
+  try {
+    const webhookRequestId = newId("wh_req");
 
-  /**
-   * Set event status to replayed
-   */
-  await updateEvent(event.id, { status: "REPLAYED" });
+    /**
+     * Schedule task
+     */
+    const { id: runId } = (await runWebhookRequest.trigger({
+      url: event.webhookUrl,
+      secret: event.webhookSecret,
+      eventName: event.name,
+      data: event.data,
+      webhookRequest: {
+        projectId: event.projectId,
+        eventId: event.id,
+        id: webhookRequestId,
+      },
+    })) as unknown as { id: string };
 
-  /**
-   * Run task
-   */
-  const { id: runId } = (await runWebhookRequest.trigger({
-    url: event.webhookUrl,
-    secret: event.webhookSecret,
-    eventName: event.name,
-    data: event.data,
-    webhookRequest,
-  })) as unknown as { id: string };
+    /**
+     * Set event status to replayed
+     */
+    const newEvent = await updateEvent(event.id, { status: "REPLAYED" });
 
-  console.log(runId);
+    /**
+     * Insert webhook request
+     */
+    await createWebhookRequest({
+      id: webhookRequestId,
+      status: "SCHEDULED",
+      createdAt: new Date(),
+      scheduledFor: new Date(),
+      runId: runId,
+      projectId: event.projectId,
+      eventId: event.id,
+    });
 
-  /**
-   * Update run ID
-   */
-  await updateWebhookRequest(webhookRequest.id, { runId });
+    /**
+     * Increment usage
+     */
+    await db
+      .update(userTable)
+      .set({
+        eventUsageCount: sql`${userTable.eventUsageCount} + 1`,
+        webhookRequestUsageCount: sql`${userTable.webhookRequestUsageCount} + 1`,
+      })
+      .where(eq(userTable.id, session.user.id));
 
-  /**
-   * Increment usage
-   */
-  await db
-    .update(userTable)
-    .set({
-      webhookRequestUsageCount: sql`${userTable.webhookRequestUsageCount} + 1`,
-    })
-    .where(eq(userTable.id, event.project.userId));
-
-  return c.json({
-    id: event.id,
-    name: event.name,
-    status: event.status,
-    webhookUrl: event.webhookUrl,
-    data: event.data,
-    createdAt: event.createdAt,
-    projectId: event.projectId,
-    project: event.project,
-  });
+    return c.json(newEvent, 200);
+  } catch (err) {
+    throw new HTTPException(500);
+  }
 });
 
 export default app;

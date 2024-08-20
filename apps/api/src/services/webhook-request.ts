@@ -1,25 +1,13 @@
 import { eq } from "drizzle-orm";
 import { db } from "~/db";
-import { webhookRequestTable, type WebhookRequest } from "~/db/schema";
-import { newId } from "~/lib/nanoid";
+import {
+  webhookRequestTable,
+  type NewWebhookRequest,
+  type WebhookRequest,
+} from "~/db/schema";
 
-export const createWebhookRequest = async (
-  eventId: string,
-  projectId: string,
-  scheduledFor: Date
-) =>
-  await db
-    .insert(webhookRequestTable)
-    .values({
-      id: newId("wh_req"),
-      status: "SCHEDULED",
-      createdAt: new Date(),
-      eventId,
-      projectId,
-      scheduledFor,
-    })
-    .returning()
-    .get();
+export const createWebhookRequest = async (webhookRequest: NewWebhookRequest) =>
+  await db.insert(webhookRequestTable).values(webhookRequest).returning().get();
 
 export const updateWebhookRequest = async (
   id: string,

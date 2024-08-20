@@ -137,7 +137,7 @@ export const eventTable = sqliteTable("events", {
   data: text("data", { mode: "json" }).notNull(),
   status: text("status", {
     enum: ["TRIGGERED", "REPLAYED", "DELIVERED", "NOT_DELIVERED"],
-  }),
+  }).notNull(),
   webhookUrl: text("webhook_url").notNull(),
   webhookSecret: text("webhook_secret").notNull(),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
@@ -171,13 +171,13 @@ export const webhookRequestTable = sqliteTable("webhook_requests", {
 
   status: text("status", {
     enum: ["SCHEDULED", "SUCCEEDED", "FAILED"],
-  }),
+  }).notNull(),
 
   sentAt: integer("sent_at", { mode: "timestamp_ms" }),
   scheduledFor: integer("scheduled_for", { mode: "timestamp_ms" }).notNull(),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
 
-  runId: text("run_id"),
+  runId: text("run_id").notNull(),
   eventId: text("event_id").notNull(),
   projectId: text("project_id").notNull(),
 });

@@ -4,8 +4,9 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { db } from "~/db";
-import { userTable, webhookRequestTable } from "~/db/schema";
+import { userTable } from "~/db/schema";
 import { env } from "~/lib/env";
+import { newId } from "~/lib/nanoid";
 import {
   getAllTimeTriggeredEventCount,
   getAllTimeWebhookRequestCount,
@@ -228,59 +229,81 @@ app.post(
       env.WEBHOOK_SECRET_SECRET
     );
 
-    /**
-     * Create event
-     */
-    const event = await createEvent(
-      name,
-      webhookUrl,
-      encryptedWebhookSecret,
-      data,
-      projectId
-    );
+    try {
+      const eventId = newId("e");
+      const webhookRequestId = newId("wh_req");
 
-    /**
-     * Create webhook request and schedule it
-     */
-    const webhookRequest = await createWebhookRequest(
-      event.id,
-      event.projectId,
-      new Date()
-    );
+      /**
+       * Create webhook request and schedule it
+       */
 
-    /**
-     * Run task
-     */
-    const { id: runId } = (await runWebhookRequest.trigger({
-      url: webhookUrl,
-      secret: encryptedWebhookSecret,
-      eventName: name,
-      data: data,
-      webhookRequest,
-    })) as unknown as { id: string };
+      /**
+       * Schedule task
+       */
+      const { id: runId } = (await runWebhookRequest.trigger({
+        url: webhookUrl,
+        secret: encryptedWebhookSecret,
+        eventName: name,
+        data: data,
+        webhookRequest: {
+          projectId,
+          eventId,
+          id: webhookRequestId,
+        },
+      })) as unknown as { id: string };
 
-    /**
-     * Update run ID
-     */
-    await db
-      .update(webhookRequestTable)
-      .set({
-        runId,
-      })
-      .where(eq(webhookRequestTable.id, webhookRequest.id));
+      /**
+       * Insert event
+       */
+      const event = await createEvent({
+        id: eventId,
+        name: name,
+        data: data,
+        webhookUrl: webhookUrl,
+        webhookSecret: encryptedWebhookSecret,
+        status: "TRIGGERED",
+        createdAt: new Date(),
+        projectId: projectId,
+      });
 
-    /**
-     * Increment usage
-     */
-    await db
-      .update(userTable)
-      .set({
-        eventUsageCount: sql`${userTable.eventUsageCount} + 1`,
-        webhookRequestUsageCount: sql`${userTable.webhookRequestUsageCount} + 1`,
-      })
-      .where(eq(userTable.id, key.project.userId));
+      /**
+       * Insert webhook request
+       */
+      await createWebhookRequest({
+        id: webhookRequestId,
+        status: "SCHEDULED",
+        createdAt: new Date(),
+        scheduledFor: new Date(),
+        runId: runId,
+        projectId: projectId,
+        eventId: eventId,
+      });
 
-    return c.json(event, 201);
+      // /**
+      //  * Update run ID
+      //  */
+      // await db
+      //   .update(webhookRequestTable)
+      //   .set({
+      //     runId,
+      //   })
+      //   .where(eq(webhookRequestTable.id, webhookRequest.id));
+
+      /**
+       * Increment usage
+       */
+      await db
+        .update(userTable)
+        .set({
+          eventUsageCount: sql`${userTable.eventUsageCount} + 1`,
+          webhookRequestUsageCount: sql`${userTable.webhookRequestUsageCount} + 1`,
+        })
+        .where(eq(userTable.id, key.project.userId));
+
+      return c.json(event, 201);
+    } catch (err) {
+      throw new HTTPException(500);
+    }
   }
 );
 

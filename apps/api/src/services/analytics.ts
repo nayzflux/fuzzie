@@ -84,7 +84,6 @@ export const getTriggeredEventTimeseries = async (
     if (!exists) {
       data.push({ bucket: i, datetime: i * x, eventCount: 0 });
     }
-    console.log(i);
     i++;
   }
 
@@ -143,8 +142,6 @@ export const getWebhookRequestTimeseries = async (
         failedCount: 0,
       });
     }
-    console.log(i);
-
     i++;
   }
 
