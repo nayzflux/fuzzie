@@ -5,6 +5,7 @@ import { newId } from "~/lib/nanoid";
 
 export const createWebhookRequest = async (
   eventId: string,
+  projectId: string,
   scheduledFor: Date
 ) =>
   await db
@@ -13,7 +14,8 @@ export const createWebhookRequest = async (
       id: newId("wh_req"),
       status: "SCHEDULED",
       createdAt: new Date(),
-      eventId: eventId,
+      eventId,
+      projectId,
       scheduledFor,
     })
     .returning()

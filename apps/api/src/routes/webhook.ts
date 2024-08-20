@@ -164,6 +164,7 @@ app.post("/internal", async (c) => {
 
       const newWebhookRequest = await createWebhookRequest(
         event.id,
+        event.projectId,
         scheduledFor
       );
 

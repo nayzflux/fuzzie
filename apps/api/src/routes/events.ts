@@ -133,7 +133,7 @@ app.post("/:eventId/replay", async (c) => {
   /**
    * Create webhook request and schedule it
    */
-  const webhookRequest = await createWebhookRequest(event.id, new Date());
+  const webhookRequest = await createWebhookRequest(event.id, event.projectId, new Date());
 
   /**
    * Set event status to replayed

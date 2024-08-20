@@ -38,6 +38,12 @@ export const userTable = sqliteTable("users", {
     .notNull(),
 });
 
+export const userRelations = relations(userTable, ({ many }) => ({
+  projects: many(projectTable),
+  sessions: many(sessionTable),
+  accounts: many(accountTable),
+}));
+
 export type NewUser = InferInsertModel<typeof userTable>;
 export type User = InferSelectModel<typeof userTable>;
 
@@ -47,13 +53,15 @@ export type User = InferSelectModel<typeof userTable>;
 export const sessionTable = sqliteTable("sessions", {
   id: text("id").notNull().primaryKey(),
   expiresAt: integer("expires_at").notNull(),
-  userId: text("user_id")
-    .notNull()
-    .references(() => userTable.id, {
-      onDelete: "cascade",
-      onUpdate: "cascade",
-    }),
+  userId: text("user_id").notNull(),
 });
+
+export const sessionRelations = relations(sessionTable, ({ one }) => ({
+  user: one(userTable, {
+    fields: [sessionTable.userId],
+    references: [userTable.id],
+  }),
+}));
 
 /**
  * Accounts
@@ -63,12 +71,7 @@ export const accountTable = sqliteTable(
   {
     providerId: text("provider_id", { enum: ["GOOGLE", "GITHUB"] }).notNull(),
     providerUserId: text("provider_user_id").notNull(),
-    userId: text("user_id")
-      .notNull()
-      .references(() => userTable.id, {
-        onDelete: "cascade",
-        onUpdate: "cascade",
-      }),
+    userId: text("user_id").notNull(),
   },
   (table) => ({
     primaryKey: primaryKey({
@@ -76,6 +79,13 @@ export const accountTable = sqliteTable(
     }),
   })
 );
+
+export const accountRelations = relations(accountTable, ({ one }) => ({
+  user: one(userTable, {
+    fields: [accountTable.userId],
+    references: [userTable.id],
+  }),
+}));
 
 /**
  * Projects
@@ -85,12 +95,7 @@ export const projectTable = sqliteTable("project", {
   name: text("name").notNull(),
   usageEventTriggered: integer("usage_event_triggered").notNull(),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
-  userId: text("user_id")
-    .notNull()
-    .references(() => userTable.id, {
-      onDelete: "cascade",
-      onUpdate: "cascade",
-    }),
+  userId: text("user_id").notNull(),
 });
 
 export type NewProject = InferInsertModel<typeof projectTable>;
@@ -113,12 +118,7 @@ export const apiKeyTable = sqliteTable("api_keys", {
   name: text("name").notNull(),
   key: text("key").notNull().unique(),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
-  projectId: text("project_id")
-    .notNull()
-    .references(() => projectTable.id, {
-      onDelete: "cascade",
-      onUpdate: "cascade",
-    }),
+  projectId: text("project_id").notNull(),
 });
 
 export const apiKeyRelations = relations(apiKeyTable, ({ one }) => ({
@@ -141,12 +141,7 @@ export const eventTable = sqliteTable("events", {
   webhookUrl: text("webhook_url").notNull(),
   webhookSecret: text("webhook_secret").notNull(),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
-  projectId: text("project_id")
-    .notNull()
-    .references(() => projectTable.id, {
-      onDelete: "cascade",
-      onUpdate: "cascade",
-    }),
+  projectId: text("project_id").notNull(),
 });
 
 export type NewEvent = InferInsertModel<typeof eventTable>;
@@ -183,20 +178,20 @@ export const webhookRequestTable = sqliteTable("webhook_requests", {
   createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
 
   runId: text("run_id"),
-  eventId: text("event_id")
-    .notNull()
-    .references(() => eventTable.id, {
-      onDelete: "cascade",
-      onUpdate: "cascade",
-    }),
+  eventId: text("event_id").notNull(),
+  projectId: text("project_id").notNull(),
 });
 
 export const webhookRequestRelations = relations(
   webhookRequestTable,
   ({ one }) => ({
-    eventId: one(eventTable, {
+    event: one(eventTable, {
       fields: [webhookRequestTable.eventId],
       references: [eventTable.id],
+    }),
+    project: one(projectTable, {
+      fields: [webhookRequestTable.projectId],
+      references: [projectTable.id],
     }),
   })
 );

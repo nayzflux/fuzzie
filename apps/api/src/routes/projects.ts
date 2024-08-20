@@ -6,6 +6,14 @@ import { z } from "zod";
 import { db } from "~/db";
 import { userTable, webhookRequestTable } from "~/db/schema";
 import { env } from "~/lib/env";
+import {
+  getAllTimeTriggeredEventCount,
+  getAllTimeWebhookRequestCount,
+  getMonthlyTriggeredEventCount,
+  getMonthlyWebhookRequestCount,
+  getTriggeredEventTimeseries,
+  getWebhookRequestTimeseries,
+} from "~/services/analytics";
 import { createEvent } from "~/services/event";
 import { createApiKey, getApiKeyWithProject } from "~/services/keys";
 import {
@@ -209,7 +217,8 @@ app.post(
      * Check usage
      */
     if (isEventExceeded(key.project.user)) throw new HTTPException(422);
-    if (isWebhookRequestExceeded(key.project.user)) throw new HTTPException(422);
+    if (isWebhookRequestExceeded(key.project.user))
+      throw new HTTPException(422);
 
     /**
      * Encrypt webhook secret using AES-256 GCM
@@ -233,7 +242,11 @@ app.post(
     /**
      * Create webhook request and schedule it
      */
-    const webhookRequest = await createWebhookRequest(event.id, new Date());
+    const webhookRequest = await createWebhookRequest(
+      event.id,
+      event.projectId,
+      new Date()
+    );
 
     /**
      * Run task
@@ -372,5 +385,92 @@ app.get("/:projectId/keys", async (c) => {
 
   return c.json(project.apiKeys);
 });
+
+const getAnalyticsQuery = z.object({
+  from: z
+    .string()
+    .transform((s) => parseInt(s))
+    .transform((i) => new Date(i)),
+  to: z
+    .string()
+    .transform((s) => parseInt(s))
+    .transform((i) => new Date(i)),
+  by: z.enum(["DAY", "HOUR", "MINUTE"]),
+});
+
+/**
+ * Get project analytics
+ */
+app.get(
+  "/:projectId/analytics",
+  zValidator("query", getAnalyticsQuery),
+  async (c) => {
+    /**
+     * Authentication
+     */
+    const session = await getSession(c);
+    if (!session) throw new HTTPException(401);
+
+    const { projectId } = c.req.param();
+
+    /**
+     * Get project
+     */
+    const project = await getProject(projectId);
+
+    /**
+     * If project doesn't exists
+     */
+    if (!project) throw new HTTPException(404);
+
+    /**
+     * Authorization
+     */
+    if (project.userId !== session.user.id) throw new HTTPException(403);
+
+    const { from, to, by } = c.req.valid("query");
+
+    const { monthlyEventCount } = (await getMonthlyTriggeredEventCount(
+      project.id
+    )) as {
+      monthlyEventCount: number;
+    };
+
+    const { allTimeEventCount } = (await getAllTimeTriggeredEventCount(
+      project.id
+    )) as {
+      allTimeEventCount: number;
+    };
+
+    const { monthlyWebhookRequestCount } = (await getMonthlyWebhookRequestCount(
+      project.id
+    )) as {
+      monthlyWebhookRequestCount: number;
+    };
+
+    const { allTimeWebhookRequestCount } = (await getAllTimeWebhookRequestCount(
+      project.id
+    )) as {
+      allTimeWebhookRequestCount: number;
+    };
+
+    const events = await getTriggeredEventTimeseries(project.id, from, to, by);
+    const webhookRequests = await getWebhookRequestTimeseries(
+      project.id,
+      from,
+      to,
+      by
+    );
+
+    return c.json({
+      allTimeEventCount,
+      monthlyEventCount,
+      allTimeWebhookRequestCount,
+      monthlyWebhookRequestCount,
+      events,
+      webhookRequests,
+    });
+  }
+);
 
 export default app;
