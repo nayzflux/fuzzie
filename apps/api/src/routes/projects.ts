@@ -26,6 +26,7 @@ import {
   getUserProjects,
   updateProject,
 } from "~/services/project";
+import { getUser } from "~/services/user";
 import { createWebhookRequest } from "~/services/webhook-request";
 import { runWebhookRequest } from "~/trigger/run-webhook-request-task";
 import { encrypt } from "~/utils/encryption";
@@ -47,6 +48,12 @@ app.post("/", zValidator("json", createProjectBody), async (c) => {
    */
   const session = await getSession(c);
   if (!session) throw new HTTPException(401);
+
+  /**
+   * Email verified is required
+   */
+  const user = await getUser(session.user.id);
+  if (!user?.isEmailVerified) throw new HTTPException(403);
 
   const { name } = c.req.valid("json");
 
@@ -234,10 +241,6 @@ app.post(
       const webhookRequestId = newId("wh_req");
 
       /**
-       * Create webhook request and schedule it
-       */
-
-      /**
        * Schedule task
        */
       const { id: runId } = (await runWebhookRequest.trigger({
@@ -278,16 +281,6 @@ app.post(
         projectId: projectId,
         eventId: eventId,
       });
-
-      // /**
-      //  * Update run ID
-      //  */
-      // await db
-      //   .update(webhookRequestTable)
-      //   .set({
-      //     runId,
-      //   })
-      //   .where(eq(webhookRequestTable.id, webhookRequest.id));
 
       /**
        * Increment usage
@@ -353,6 +346,12 @@ app.post(
      */
     const session = await getSession(c);
     if (!session) throw new HTTPException(401);
+
+    /**
+     * Email verified is required
+     */
+    const user = await getUser(session.user.id);
+    if (!user?.isEmailVerified) throw new HTTPException(403);
 
     const { projectId } = c.req.param();
 

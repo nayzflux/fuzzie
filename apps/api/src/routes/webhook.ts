@@ -5,7 +5,7 @@ import { TimeSpan } from "lucia";
 import cryto from "node:crypto";
 import type { TimeSpanUnit } from "oslo";
 import { db } from "~/db";
-import { userTable, webhookRequestTable } from "~/db/schema";
+import { userTable } from "~/db/schema";
 import { env } from "~/lib/env";
 import { newId } from "~/lib/nanoid";
 import { stripe } from "~/lib/stripe";

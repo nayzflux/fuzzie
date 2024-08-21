@@ -11,7 +11,7 @@ import {
   getEventWithProjectAndWebhookSecret,
   updateEvent,
 } from "~/services/event";
-import { updateUser } from "~/services/user";
+import { getUser, updateUser } from "~/services/user";
 import {
   createWebhookRequest,
   updateWebhookRequest,
@@ -85,6 +85,12 @@ app.post("/:eventId/replay", async (c) => {
    */
   const session = await getSession(c);
   if (!session) throw new HTTPException(401);
+
+  /**
+   * Email verified is required
+   */
+  const user = await getUser(session.user.id);
+  if (!user?.isEmailVerified) throw new HTTPException(403);
 
   const { eventId } = c.req.param();
 
