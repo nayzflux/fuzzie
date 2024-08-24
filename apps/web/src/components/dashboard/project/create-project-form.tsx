@@ -54,6 +54,9 @@ export default function CreateProjectForm() {
         // Rate limited
         if (code === 429) return false;
 
+        // Forbidden - If email is not verified
+        if (code === 403) return false;
+
         // Unauthorized
         if (code === 401) return false;
       }
@@ -81,6 +84,15 @@ export default function CreateProjectForm() {
           return toast({
             title: "Unauthorized",
             description: `Authentication is required!`,
+            variant: "destructive",
+          });
+        }
+
+        // Forbidden
+        if (code === 403) {
+          return toast({
+            title: "Forbidden",
+            description: `Email verification is required! Check your inbox.`,
             variant: "destructive",
           });
         }

@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { Gabarito } from "next/font/google";
 import { Toaster } from "~/components/ui/toaster";
+import { cn } from "~/lib/utils";
 import QueryProvider from "~/providers/query-provider";
 import ThemeProvider from "~/providers/theme-provider";
 import "./globals.css";
-import { cn } from "~/lib/utils";
 
 // const inter = Inter({ subsets: ["latin"] });
 const gabarito = Gabarito({ subsets: ["latin"] });
@@ -21,7 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={cn(gabarito.className, "min-h-screen")}>
+      <body className={cn("min-h-screen", gabarito.className)}>
         <ThemeProvider>
           <QueryProvider>
             <Toaster />

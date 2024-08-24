@@ -87,7 +87,7 @@ export default function CreateApiKeyForm({
         if (code === 403) {
           return toast({
             title: "Forbidden",
-            description: `You're not allow to do this action!`,
+            description: `You're not allowed to do this action!`,
             variant: "destructive",
           });
         }
