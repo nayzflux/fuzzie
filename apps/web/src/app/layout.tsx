@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Gabarito } from "next/font/google";
 import { Toaster } from "~/components/ui/toaster";
+import { cn } from "~/lib/utils";
 import QueryProvider from "~/providers/query-provider";
 import ThemeProvider from "~/providers/theme-provider";
 import "./globals.css";
@@ -20,13 +21,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={gabarito.className}>
+      <body className={cn("min-h-screen", gabarito.className)}>
         <ThemeProvider>
           <QueryProvider>
             <Toaster />
-            <div className="w-screen min-h-screen overflow-hidden">
-              {children}
-            </div>
+            {children}
           </QueryProvider>
         </ThemeProvider>
       </body>

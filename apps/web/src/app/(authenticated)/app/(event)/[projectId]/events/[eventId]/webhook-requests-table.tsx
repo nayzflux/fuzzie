@@ -14,10 +14,11 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import { formatDateTimeLong } from "~/lib/format";
-import { PartialWebhookRequest } from "~/types/webhook-request";
+import { PartialWebhookRequest, WebhookRequest } from "~/types/webhook-request";
+import { HTTPCodeBadge } from "./http-code-badge";
 import WebhookRequestStatusBadge from "./webhook-request-status-badge";
 
-export const columns: ColumnDef<PartialWebhookRequest>[] = [
+export const columns: ColumnDef<WebhookRequest>[] = [
   {
     accessorKey: "status",
     header: "Status",
@@ -29,6 +30,19 @@ export const columns: ColumnDef<PartialWebhookRequest>[] = [
     accessorKey: "id",
     header: "ID",
     cell: ({ row }) => <Badge variant="outline">{row.original.id}</Badge>,
+  },
+  {
+    accessorKey: "responseCode",
+    header: "Response Code",
+    cell: ({ row }) => (
+      <div>
+        {row.original.responseCode ? (
+          <HTTPCodeBadge code={row.original.responseCode} />
+        ) : (
+          "---"
+        )}
+      </div>
+    ),
   },
   {
     accessorKey: "sentAt",

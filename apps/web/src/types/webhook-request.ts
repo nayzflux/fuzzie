@@ -1,11 +1,11 @@
 export type WebhookRequest = PartialWebhookRequest & {
-  requestHeaders: string;
-  requestBody: string;
-  requestUrl: string;
+  requestHeaders?: string;
+  requestBody?: string;
+  requestUrl?: string;
 
-  responseHeaders: string;
-  responseBody: string;
-  responseCode: string;
+  responseHeaders?: string;
+  responseBody?: string;
+  responseCode?: number;
 };
 
 export type PartialWebhookRequest = {

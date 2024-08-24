@@ -3,7 +3,7 @@ import Header from "~/components/landing/header";
 
 export default function LandingLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen w-screen">
+    <div>
       <Header />
       {children}
     </div>

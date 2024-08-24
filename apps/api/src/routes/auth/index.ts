@@ -8,12 +8,13 @@ import { env } from "~/lib/env";
 import github from "~/routes/auth/github";
 import {
   createUser,
+  getUser,
   getUserWithPassword,
   setUserEmailVerification,
 } from "~/services/user";
 import { sendEmailVerificationLink } from "~/utils/email";
 import { verify } from "~/utils/password";
-import { revokeSession, setSession } from "~/utils/session";
+import { getSession, revokeSession, setSession } from "~/utils/session";
 
 const app = new Hono();
 
@@ -67,11 +68,6 @@ app.post("/sign-in", zValidator("json", signInBody), async (c) => {
   // Set session
   await setSession(c, user.id);
 
-  // // If email hasn't been verified send email verification link
-  // if (!user.isEmailVerified) {
-  //   await sendEmailVerificationLink(email, user.id);
-  // }
-
   return c.json({
     id: user.id,
     email: user.email,
@@ -107,6 +103,20 @@ app.get("/email-verify", async (c) => {
   await setUserEmailVerification(validatedToken.id, validatedToken.email, true);
 
   return c.redirect(`${env.CLIENT_URL}/email-verified`);
+});
+
+app.post("/send-email-verification-link", async (c) => {
+  const session = await getSession(c);
+  if (!session) throw new HTTPException(401);
+
+  const user = await getUser(session.user.id);
+  if (!user) throw new HTTPException(404);
+
+  if (user.isEmailVerified) throw new HTTPException(400);
+
+  await sendEmailVerificationLink(user.email, user.id);
+
+  return c.json({ email: user.email }, 200);
 });
 
 /**

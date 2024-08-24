@@ -1,14 +1,18 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { TimeSpan } from "lucia";
 import cryto from "node:crypto";
 import type { TimeSpanUnit } from "oslo";
 import { db } from "~/db";
-import { eventTable, webhookRequestTable } from "~/db/schema";
+import { userTable } from "~/db/schema";
 import { env } from "~/lib/env";
+import { newId } from "~/lib/nanoid";
 import { stripe } from "~/lib/stripe";
-import { updateEvent } from "~/services/event";
+import {
+  getEventWithProjectAndWebhookSecret,
+  updateEvent,
+} from "~/services/event";
 import { updateUser, updateUserBySubscriptionId } from "~/services/user";
 import {
   createWebhookRequest,
@@ -19,6 +23,7 @@ import type {
   InternalEvent,
   InternalWebhookRequestEventData,
 } from "~/types/internal-event";
+import { isWebhookRequestExceeded } from "~/utils/usage";
 
 const app = new Hono();
 
@@ -136,15 +141,18 @@ app.post("/internal", async (c) => {
 
       console.log(`[WEBHOOK] ${webhookRequest.eventId} retrying in ${delay}`);
 
-      const event = await db.query.events.findFirst({
-        where: eq(eventTable.id, webhookRequest.eventId),
-      });
+      const event = await getEventWithProjectAndWebhookSecret(
+        webhookRequest.eventId
+      );
 
       if (!event) throw new HTTPException(404);
 
       /**
-       * Create new webhook request
+       * Check usage
        */
+      if (isWebhookRequestExceeded(event.project.user))
+        throw new HTTPException(422);
+
       const unit = delay[delay.length - 1] as TimeSpanUnit;
       const amount = parseInt(delay.slice(0, delay.length - 1));
 
@@ -152,35 +160,53 @@ app.post("/internal", async (c) => {
         Date.now() + new TimeSpan(amount, unit).milliseconds()
       );
 
-      const newWebhookRequest = await createWebhookRequest(
-        event.id,
-        scheduledFor
-      );
+      try {
+        const webhookRequestId = newId("wh_req");
 
-      /**
-       * Schedule task
-       */
-      const { id: runId } = (await runWebhookRequest.trigger(
-        {
-          url: event.webhookUrl,
-          secret: event.webhookSecret,
-          eventName: event.name,
-          data: event.data,
-          webhookRequest: newWebhookRequest,
-          retry: retry + 1,
-        },
-        { delay }
-      )) as unknown as { id: string };
+        /**
+         * Schedule task
+         */
+        const { id: runId } = (await runWebhookRequest.trigger(
+          {
+            url: event.webhookUrl,
+            secret: event.webhookSecret,
+            eventName: event.name,
+            data: event.data,
+            webhookRequest: {
+              id: webhookRequestId,
+              projectId: event.projectId,
+              eventId: event.id,
+            },
+            retry: retry + 1,
+          },
+          { delay }
+        )) as unknown as { id: string };
 
-      /**
-       * Update run ID
-       */
-      await db
-        .update(webhookRequestTable)
-        .set({
-          runId,
-        })
-        .where(eq(webhookRequestTable.id, newWebhookRequest.id));
+        /**
+         * Insert webhook request
+         */
+        await createWebhookRequest({
+          id: webhookRequestId,
+          status: "SCHEDULED",
+          scheduledFor: scheduledFor,
+          createdAt: new Date(),
+          projectId: event.projectId,
+          eventId: event.id,
+          runId: runId,
+        });
+
+        /**
+         * Increment usage
+         */
+        await db
+          .update(userTable)
+          .set({
+            webhookRequestUsageCount: sql`${userTable.webhookRequestUsageCount} + 1`,
+          })
+          .where(eq(userTable.id, event.project.userId));
+      } catch (err) {
+        throw new HTTPException(500);
+      }
     } else {
       console.log(`[WEBHOOK] ${webhookRequest.eventId} not delivered`);
 

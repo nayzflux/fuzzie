@@ -1,11 +1,20 @@
 import { zValidator } from "@hono/zod-validator";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { db } from "~/db";
-import { webhookRequestTable } from "~/db/schema";
+import { userTable } from "~/db/schema";
 import { env } from "~/lib/env";
+import { newId } from "~/lib/nanoid";
+import {
+  getAllTimeTriggeredEventCount,
+  getAllTimeWebhookRequestCount,
+  getMonthlyTriggeredEventCount,
+  getMonthlyWebhookRequestCount,
+  getTriggeredEventTimeseries,
+  getWebhookRequestTimeseries,
+} from "~/services/analytics";
 import { createEvent } from "~/services/event";
 import { createApiKey, getApiKeyWithProject } from "~/services/keys";
 import {
@@ -17,10 +26,12 @@ import {
   getUserProjects,
   updateProject,
 } from "~/services/project";
+import { getUser } from "~/services/user";
 import { createWebhookRequest } from "~/services/webhook-request";
 import { runWebhookRequest } from "~/trigger/run-webhook-request-task";
 import { encrypt } from "~/utils/encryption";
 import { getSession } from "~/utils/session";
+import { isEventExceeded, isWebhookRequestExceeded } from "~/utils/usage";
 
 const app = new Hono();
 
@@ -37,6 +48,12 @@ app.post("/", zValidator("json", createProjectBody), async (c) => {
    */
   const session = await getSession(c);
   if (!session) throw new HTTPException(401);
+
+  /**
+   * Email verified is required
+   */
+  const user = await getUser(session.user.id);
+  if (!user?.isEmailVerified) throw new HTTPException(403);
 
   const { name } = c.req.valid("json");
 
@@ -205,6 +222,13 @@ app.post(
     if (projectId !== key.project.id) throw new HTTPException(403);
 
     /**
+     * Check usage
+     */
+    if (isEventExceeded(key.project.user)) throw new HTTPException(422);
+    if (isWebhookRequestExceeded(key.project.user))
+      throw new HTTPException(422);
+
+    /**
      * Encrypt webhook secret using AES-256 GCM
      */
     const encryptedWebhookSecret = encrypt(
@@ -212,44 +236,67 @@ app.post(
       env.WEBHOOK_SECRET_SECRET
     );
 
-    /**
-     * Create event
-     */
-    const event = await createEvent(
-      name,
-      webhookUrl,
-      encryptedWebhookSecret,
-      data,
-      projectId
-    );
+    try {
+      const eventId = newId("e");
+      const webhookRequestId = newId("wh_req");
 
-    /**
-     * Create webhook request and schedule it
-     */
-    const webhookRequest = await createWebhookRequest(event.id, new Date());
+      /**
+       * Schedule task
+       */
+      const { id: runId } = (await runWebhookRequest.trigger({
+        url: webhookUrl,
+        secret: encryptedWebhookSecret,
+        eventName: name,
+        data: data,
+        webhookRequest: {
+          projectId,
+          eventId,
+          id: webhookRequestId,
+        },
+      })) as unknown as { id: string };
 
-    /**
-     * Run task
-     */
-    const { id: runId } = (await runWebhookRequest.trigger({
-      url: webhookUrl,
-      secret: encryptedWebhookSecret,
-      eventName: name,
-      data: data,
-      webhookRequest,
-    })) as unknown as { id: string };
+      /**
+       * Insert event
+       */
+      const event = await createEvent({
+        id: eventId,
+        name: name,
+        data: data,
+        webhookUrl: webhookUrl,
+        webhookSecret: encryptedWebhookSecret,
+        status: "TRIGGERED",
+        createdAt: new Date(),
+        projectId: projectId,
+      });
 
-    /**
-     * Update run ID
-     */
-    await db
-      .update(webhookRequestTable)
-      .set({
-        runId,
-      })
-      .where(eq(webhookRequestTable.id, webhookRequest.id));
+      /**
+       * Insert webhook request
+       */
+      await createWebhookRequest({
+        id: webhookRequestId,
+        status: "SCHEDULED",
+        createdAt: new Date(),
+        scheduledFor: new Date(),
+        runId: runId,
+        projectId: projectId,
+        eventId: eventId,
+      });
 
-    return c.json(event, 201);
+      /**
+       * Increment usage
+       */
+      await db
+        .update(userTable)
+        .set({
+          eventUsageCount: sql`${userTable.eventUsageCount} + 1`,
+          webhookRequestUsageCount: sql`${userTable.webhookRequestUsageCount} + 1`,
+        })
+        .where(eq(userTable.id, key.project.userId));
+
+      return c.json(event, 201);
+    } catch (err) {
+      throw new HTTPException(500);
+    }
   }
 );
 
@@ -299,6 +346,12 @@ app.post(
      */
     const session = await getSession(c);
     if (!session) throw new HTTPException(401);
+
+    /**
+     * Email verified is required
+     */
+    const user = await getUser(session.user.id);
+    if (!user?.isEmailVerified) throw new HTTPException(403);
 
     const { projectId } = c.req.param();
 
@@ -354,5 +407,92 @@ app.get("/:projectId/keys", async (c) => {
 
   return c.json(project.apiKeys);
 });
+
+const getAnalyticsQuery = z.object({
+  from: z
+    .string()
+    .transform((s) => parseInt(s))
+    .transform((i) => new Date(i)),
+  to: z
+    .string()
+    .transform((s) => parseInt(s))
+    .transform((i) => new Date(i)),
+  by: z.enum(["DAY", "HOUR", "MINUTE"]),
+});
+
+/**
+ * Get project analytics
+ */
+app.get(
+  "/:projectId/analytics",
+  zValidator("query", getAnalyticsQuery),
+  async (c) => {
+    /**
+     * Authentication
+     */
+    const session = await getSession(c);
+    if (!session) throw new HTTPException(401);
+
+    const { projectId } = c.req.param();
+
+    /**
+     * Get project
+     */
+    const project = await getProject(projectId);
+
+    /**
+     * If project doesn't exists
+     */
+    if (!project) throw new HTTPException(404);
+
+    /**
+     * Authorization
+     */
+    if (project.userId !== session.user.id) throw new HTTPException(403);
+
+    const { from, to, by } = c.req.valid("query");
+
+    const { monthlyEventCount } = (await getMonthlyTriggeredEventCount(
+      project.id
+    )) as {
+      monthlyEventCount: number;
+    };
+
+    const { allTimeEventCount } = (await getAllTimeTriggeredEventCount(
+      project.id
+    )) as {
+      allTimeEventCount: number;
+    };
+
+    const { monthlyWebhookRequestCount } = (await getMonthlyWebhookRequestCount(
+      project.id
+    )) as {
+      monthlyWebhookRequestCount: number;
+    };
+
+    const { allTimeWebhookRequestCount } = (await getAllTimeWebhookRequestCount(
+      project.id
+    )) as {
+      allTimeWebhookRequestCount: number;
+    };
+
+    const events = await getTriggeredEventTimeseries(project.id, from, to, by);
+    const webhookRequests = await getWebhookRequestTimeseries(
+      project.id,
+      from,
+      to,
+      by
+    );
+
+    return c.json({
+      allTimeEventCount,
+      monthlyEventCount,
+      allTimeWebhookRequestCount,
+      monthlyWebhookRequestCount,
+      events,
+      webhookRequests,
+    });
+  }
+);
 
 export default app;

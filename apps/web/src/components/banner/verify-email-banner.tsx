@@ -1,12 +1,31 @@
 "use client";
 
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import { useMutation } from "@tanstack/react-query";
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
 import { useCurrentUser } from "~/hooks/use-current-user";
+import { useToast } from "../ui/use-toast";
+import { api } from "~/lib/api";
 
 export default function VerifyEmailBanner() {
   const { data: user, isPending, isError } = useCurrentUser();
+
+  const { toast } = useToast();
+
+  const { mutate, isPending: isMutationPending } = useMutation({
+    mutationKey: ["send-email-verification-link"],
+    mutationFn: async () => {
+      const res = await api.post("auth/send-email-verification-link");
+      return res.json<{ email: string }>();
+    },
+    onSuccess: ({ email }) => {
+      toast({
+        title: "Check your inbox",
+        description: `A new email verification link has been sent to ${email}!`,
+      });
+    },
+  });
 
   if (isPending) return null;
   if (isError) return null;
@@ -24,7 +43,7 @@ export default function VerifyEmailBanner() {
           </p>
         </div>
 
-        <Button variant="outline" className="text-xs sm:text-sm">
+        <Button disabled={isMutationPending} onClick={() => mutate()} variant="outline" className="text-xs sm:text-sm">
           Send a new link
         </Button>
       </Card>

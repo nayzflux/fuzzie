@@ -1,5 +1,4 @@
 import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
-import { nanoid } from "~/lib/nanoid";
 
 export function encrypt(text: string, key: string) {
   // Generate IV

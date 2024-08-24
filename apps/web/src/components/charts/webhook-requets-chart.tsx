@@ -1,5 +1,6 @@
 "use client";
 
+import dayjs from "dayjs";
 import { Bar, BarChart, CartesianGrid, LabelList, XAxis } from "recharts";
 import { Card } from "~/components/ui/card";
 import {
@@ -8,21 +9,13 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "~/components/ui/chart";
-const chartData = [
-  { date: "January", succeeded: 34, failed: 1 },
-  { date: "February", succeeded: 31, failed: 2 },
-  { date: "March", succeeded: 26, failed: 1 },
-  { date: "April", succeeded: 24, failed: 3 },
-  { date: "May", succeeded: 41, failed: 2 },
-  { date: "June", succeeded: 24, failed: 3 },
-];
 
 const chartConfig = {
-  succeeded: {
+  succeededCount: {
     label: "Succeeded",
     color: "#2563eb",
   },
-  failed: {
+  failedCount: {
     label: "Failed",
     color: "#ef4444",
   },
@@ -30,15 +23,17 @@ const chartConfig = {
 
 export default function WebhookRequestsChart({
   data,
+  by,
 }: {
-  data: { succeeded: number; failed: number; date: string }[];
+  data: { succeededCount: number; failedCount: number; datetime: string }[];
+  by: "DAY" | "HOUR" | "MINUTE";
 }) {
   return (
     <Card className="p-6">
       <ChartContainer config={chartConfig}>
         <BarChart
           accessibilityLayer
-          data={chartData}
+          data={data}
           margin={{
             top: 20,
           }}
@@ -46,11 +41,21 @@ export default function WebhookRequestsChart({
           <CartesianGrid vertical={false} />
 
           <XAxis
-            dataKey="date"
+            dataKey="datetime"
             tickLine={false}
             tickMargin={10}
             axisLine={false}
-            tickFormatter={(value) => value.slice(0, 3)}
+            tickFormatter={(datetime) => {
+              if (by === "MINUTE") {
+                return dayjs(datetime).format("HH:mm");
+              }
+
+              if (by === "HOUR") {
+                return dayjs(datetime).format("HH:00");
+              }
+
+              return dayjs(datetime).format("DD/MM");
+            }}
           />
 
           <ChartTooltip
@@ -58,7 +63,11 @@ export default function WebhookRequestsChart({
             content={<ChartTooltipContent hideLabel />}
           />
 
-          <Bar dataKey="succeeded" fill="var(--color-succeeded)" radius={8}>
+          <Bar
+            dataKey="succeededCount"
+            fill="var(--color-succeededCount)"
+            radius={8}
+          >
             <LabelList
               position="top"
               offset={12}
@@ -67,7 +76,7 @@ export default function WebhookRequestsChart({
             />
           </Bar>
 
-          <Bar dataKey="failed" fill="var(--color-failed)" radius={8}>
+          <Bar dataKey="failedCount" fill="var(--color-failedCount)" radius={8}>
             <LabelList
               position="top"
               offset={12}

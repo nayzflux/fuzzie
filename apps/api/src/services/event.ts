@@ -1,27 +1,16 @@
 import { desc, eq } from "drizzle-orm";
 import { db } from "~/db";
-import { eventTable, webhookRequestTable, type Event } from "~/db/schema";
-import { newId } from "~/lib/nanoid";
+import {
+  eventTable,
+  webhookRequestTable,
+  type Event,
+  type NewEvent,
+} from "~/db/schema";
 
-export const createEvent = async (
-  name: string,
-  webhookUrl: string,
-  encryptedWebhookSecret: string,
-  data: Record<string, unknown>,
-  projectId: string
-) =>
+export const createEvent = async (event: NewEvent) =>
   await db
     .insert(eventTable)
-    .values({
-      id: newId("e"),
-      name,
-      data,
-      webhookUrl,
-      webhookSecret: encryptedWebhookSecret,
-      status: "TRIGGERED",
-      createdAt: new Date(),
-      projectId,
-    })
+    .values(event)
     .returning({
       id: eventTable.id,
       name: eventTable.name,
@@ -34,7 +23,12 @@ export const createEvent = async (
     .get();
 
 export const updateEvent = async (id: string, values: Partial<Event>) =>
-  await db.update(eventTable).set(values).where(eq(eventTable.id, id));
+  await db
+    .update(eventTable)
+    .set(values)
+    .where(eq(eventTable.id, id))
+    .returning()
+    .get();
 
 export const getEventWithProject = async (id: string) =>
   db.query.events.findFirst({
@@ -51,12 +45,22 @@ export const getEventWithProjectAndWebhookSecret = async (id: string) =>
   db.query.events.findFirst({
     where: eq(eventTable.id, id),
     with: {
-      project: true,
+      project: {
+        with: {
+          user: {
+            columns: {
+              eventUsageCount: true,
+              webhookRequestUsageCount: true,
+              plan: true,
+            },
+          },
+        },
+      },
     },
   });
 
 export const getEventWithProjectAndWebhookRequests = async (id: string) =>
-  db.query.events.findFirst({
+  await db.query.events.findFirst({
     where: eq(eventTable.id, id),
     with: {
       project: true,

@@ -1,21 +1,24 @@
 import { runs } from "@trigger.dev/sdk/v3";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { db } from "~/db";
-import { webhookRequestTable } from "~/db/schema";
+import { userTable, webhookRequestTable } from "~/db/schema";
+import { newId } from "~/lib/nanoid";
 import {
   getEventWithProject,
   getEventWithProjectAndWebhookRequests,
   getEventWithProjectAndWebhookSecret,
   updateEvent,
 } from "~/services/event";
+import { getUser, updateUser } from "~/services/user";
 import {
   createWebhookRequest,
   updateWebhookRequest,
 } from "~/services/webhook-request";
 import { runWebhookRequest } from "~/trigger/run-webhook-request-task";
 import { getSession } from "~/utils/session";
+import { isWebhookRequestExceeded } from "~/utils/usage";
 
 const app = new Hono();
 
@@ -83,6 +86,12 @@ app.post("/:eventId/replay", async (c) => {
   const session = await getSession(c);
   if (!session) throw new HTTPException(401);
 
+  /**
+   * Email verified is required
+   */
+  const user = await getUser(session.user.id);
+  if (!user?.isEmailVerified) throw new HTTPException(403);
+
   const { eventId } = c.req.param();
 
   /**
@@ -99,6 +108,12 @@ app.post("/:eventId/replay", async (c) => {
    * Authorization
    */
   if (event.project.userId !== session.user.id) throw new HTTPException(403);
+
+  /**
+   * Check usage
+   */
+  if (isWebhookRequestExceeded(event.project.user))
+    throw new HTTPException(422);
 
   /**
    * If event is not finished cancel any scheduled request
@@ -122,44 +137,57 @@ app.post("/:eventId/replay", async (c) => {
     }
   }
 
-  /**
-   * Create webhook request and schedule it
-   */
-  const webhookRequest = await createWebhookRequest(event.id, new Date());
+  try {
+    const webhookRequestId = newId("wh_req");
 
-  /**
-   * Set event status to replayed
-   */
-  await updateEvent(event.id, { status: "REPLAYED" });
+    /**
+     * Schedule task
+     */
+    const { id: runId } = (await runWebhookRequest.trigger({
+      url: event.webhookUrl,
+      secret: event.webhookSecret,
+      eventName: event.name,
+      data: event.data,
+      webhookRequest: {
+        projectId: event.projectId,
+        eventId: event.id,
+        id: webhookRequestId,
+      },
+    })) as unknown as { id: string };
 
-  /**
-   * Run task
-   */
-  const { id: runId } = (await runWebhookRequest.trigger({
-    url: event.webhookUrl,
-    secret: event.webhookSecret,
-    eventName: event.name,
-    data: event.data,
-    webhookRequest,
-  })) as unknown as { id: string };
+    /**
+     * Set event status to replayed
+     */
+    const newEvent = await updateEvent(event.id, { status: "REPLAYED" });
 
-  console.log(runId);
+    /**
+     * Insert webhook request
+     */
+    await createWebhookRequest({
+      id: webhookRequestId,
+      status: "SCHEDULED",
+      createdAt: new Date(),
+      scheduledFor: new Date(),
+      runId: runId,
+      projectId: event.projectId,
+      eventId: event.id,
+    });
 
-  /**
-   * Update run ID
-   */
-  await updateWebhookRequest(webhookRequest.id, { runId });
+    /**
+     * Increment usage
+     */
+    await db
+      .update(userTable)
+      .set({
+        eventUsageCount: sql`${userTable.eventUsageCount} + 1`,
+        webhookRequestUsageCount: sql`${userTable.webhookRequestUsageCount} + 1`,
+      })
+      .where(eq(userTable.id, session.user.id));
 
-  return c.json({
-    id: event.id,
-    name: event.name,
-    status: event.status,
-    webhookUrl: event.webhookUrl,
-    data: event.data,
-    createdAt: event.createdAt,
-    projectId: event.projectId,
-    project: event.project,
-  });
+    return c.json(newEvent, 200);
+  } catch (err) {
+    throw new HTTPException(500);
+  }
 });
 
 export default app;
