@@ -1,6 +1,7 @@
 export type EventStatus =
   | "TRIGGERED"
   | "REPLAYED"
+  | "RETRIED"
   | "DELIVERED"
   | "NOT_DELIVERED";
 

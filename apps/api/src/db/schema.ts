@@ -136,7 +136,7 @@ export const eventTable = sqliteTable("events", {
   name: text("name").notNull(),
   data: text("data", { mode: "json" }).notNull(),
   status: text("status", {
-    enum: ["TRIGGERED", "REPLAYED", "DELIVERED", "NOT_DELIVERED"],
+    enum: ["TRIGGERED", "REPLAYED", "RETRIED", "DELIVERED", "NOT_DELIVERED"],
   }).notNull(),
   webhookUrl: text("webhook_url").notNull(),
   webhookSecret: text("webhook_secret").notNull(),

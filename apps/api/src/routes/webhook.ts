@@ -196,6 +196,13 @@ app.post("/internal", async (c) => {
         });
 
         /**
+         * Set event to retried
+         */
+        await updateEvent(event.id, {
+          status: "RETRIED",
+        });
+
+        /**
          * Increment usage
          */
         await db
