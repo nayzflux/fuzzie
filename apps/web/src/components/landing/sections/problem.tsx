@@ -1,4 +1,5 @@
 import { CheckIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import Particles from "~/components/magicui/particles";
 import LandingSection from "./landing-section";
 import SectionTitle from "./section-title";
 
@@ -24,6 +25,13 @@ export default function Problem() {
       <SectionTitle
         title=" Let us handle the intricate work."
         subtitle="Webhooks can be painful"
+      />
+
+      <Particles
+        className="absolute inset-0"
+        quantity={100}
+        ease={80}
+        refresh
       />
 
       <div className="flex gap-32">

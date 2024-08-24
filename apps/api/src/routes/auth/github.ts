@@ -37,8 +37,9 @@ app.get("/redirect", async (c) => {
   const state = c.req.query("state");
   const storedState = getCookie(c, STATE_COOKIE_NAME);
 
-  if (!code || !state || !storedState || state !== storedState)
+  if (!code || !state || !storedState || state !== storedState) {
     throw new HTTPException(400);
+  }
 
   try {
     /**
@@ -70,11 +71,7 @@ app.get("/redirect", async (c) => {
 
     const emails = (await emailsResponse.json()) as GitHubEmail[];
 
-    // console.debug(emails);
-
     const email = emails.find((e) => e.primary === true && e.verified === true);
-
-    // console.debug(email);
 
     if (!email) throw new HTTPException(400);
 
@@ -115,6 +112,8 @@ app.get("/redirect", async (c) => {
     ) {
       throw new HTTPException(400);
     }
+
+    console.error(e);
 
     throw new HTTPException(500);
   }

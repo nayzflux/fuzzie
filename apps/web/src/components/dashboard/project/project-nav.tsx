@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
+import { CopyToClipboard } from "~/components/copy-to-clipboard";
 import { cn } from "~/lib/utils";
 
 const routes = [
@@ -25,8 +26,8 @@ export default function ProjectNav() {
   const pathname = usePathname();
 
   return (
-    <nav>
-      <ul className="flex px-4 sm:px-16 lg:px-32 xl:px-64 2xl:px-96">
+    <nav className="sticky top-[103px] border-b bg-background z-40">
+      <ul className="flex px-4 sm:px-16 lg:px-32 xl:px-64 2xl:px-96 items-center">
         {routes.map(({ href, href2, label }) => (
           <Link key={href} href={href.replace("[projectId]", projectId)}>
             <li
@@ -43,6 +44,10 @@ export default function ProjectNav() {
             </li>
           </Link>
         ))}
+
+        <div className="ml-auto">
+          <CopyToClipboard value={projectId} className="max-w-[200px]" />
+        </div>
       </ul>
     </nav>
   );

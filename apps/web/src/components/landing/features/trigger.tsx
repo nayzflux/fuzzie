@@ -29,59 +29,70 @@ export const Trigger = ({ className }: { className?: string }) => {
   const div2Ref = useRef<HTMLDivElement>(null);
   const div3Ref = useRef<HTMLDivElement>(null);
   const div4Ref = useRef<HTMLDivElement>(null);
+  const div5Ref = useRef<HTMLDivElement>(null);
 
   return (
-    <div
-      className={cn(
-        "relative flex h-[500px] w-full items-center justify-center overflow-hidden rounded-lg border bg-background p-10 md:shadow-xl",
-        className
-      )}
-      ref={containerRef}
-    >
-      <div className="flex size-full max-w-lg flex-row items-stretch justify-between gap-10">
-        <div className="flex flex-col justify-center">
-          <Circle ref={div1Ref}>
-            <ServerStackIcon className="size-6" />
-          </Circle>
-        </div>
+    <div className="absolute h-full w-full transition-all duration-300 ease-out [mask-image:linear-gradient(to_top,transparent_10%,#000_100%)] group-hover:scale-105">
+      <div className="p-16">
+        <div
+          className="relative flex w-full items-center justify-center overflow-hidden"
+          ref={containerRef}
+        >
+          <div className="flex size-full max-w-lg flex-row items-stretch justify-between gap-10">
+            <div className="flex flex-row items-center justify-between w-full gap-8">
+              <Circle ref={div1Ref}>
+                <ServerStackIcon className="size-12 text-black" />
+              </Circle>
 
-        <div className="flex flex-col justify-center">
-          <div ref={div2Ref}>
-            <Logo className="z-50 size-16" />
+              <div ref={div2Ref} className="z-30">
+                <Logo width={48} height={48} />
+              </div>
+
+              <div className="grid grid-cols-1 grid-rows-3 gap-4">
+                <Circle ref={div3Ref}>
+                  <UserIcon className="size-12 text-black" />
+                </Circle>
+
+                <Circle ref={div4Ref}>
+                  <UserIcon className="size-12 text-black" />
+                </Circle>
+
+                <Circle ref={div5Ref}>
+                  <UserIcon className="size-12 text-black" />
+                </Circle>
+              </div>
+            </div>
           </div>
-        </div>
 
-        <div className="flex flex-col justify-center gap-2">
-          <Circle ref={div3Ref}>
-            <UserIcon className="size-6" />
-          </Circle>
+          <AnimatedBeam
+            duration={2}
+            containerRef={containerRef}
+            fromRef={div1Ref}
+            toRef={div2Ref}
+          />
 
-          <Circle ref={div4Ref}>
-            <UserIcon className="size-6" />
-          </Circle>
+          <AnimatedBeam
+            duration={2}
+            containerRef={containerRef}
+            fromRef={div2Ref}
+            toRef={div3Ref}
+          />
+
+          <AnimatedBeam
+            duration={2}
+            containerRef={containerRef}
+            fromRef={div2Ref}
+            toRef={div4Ref}
+          />
+
+          <AnimatedBeam
+            duration={2}
+            containerRef={containerRef}
+            fromRef={div2Ref}
+            toRef={div5Ref}
+          />
         </div>
       </div>
-
-      <AnimatedBeam
-        duration={3}
-        containerRef={containerRef}
-        fromRef={div1Ref}
-        toRef={div2Ref}
-      />
-
-      <AnimatedBeam
-        duration={2}
-        containerRef={containerRef}
-        fromRef={div2Ref}
-        toRef={div3Ref}
-      />
-
-      <AnimatedBeam
-        duration={2}
-        containerRef={containerRef}
-        fromRef={div2Ref}
-        toRef={div4Ref}
-      />
     </div>
   );
 };

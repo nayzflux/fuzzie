@@ -5,7 +5,9 @@ import {
   ShieldCheckIcon,
 } from "@heroicons/react/24/outline";
 import { BentoCard, BentoGrid } from "../../magicui/bento-grid";
+import { Logs } from "./logs";
 import { Trigger } from "./trigger";
+import { Retry } from "./retry";
 
 const features = [
   {
@@ -34,7 +36,7 @@ const features = [
     href: "#",
     cta: "Learn more",
     className: "col-span-3 lg:col-span-2",
-    background: <div></div>,
+    background: <Logs />,
   },
   {
     Icon: ArrowPathIcon,
@@ -44,7 +46,7 @@ const features = [
     className: "col-span-3 lg:col-span-1",
     href: "#",
     cta: "Learn more",
-    background: <div></div>,
+    background: <Retry />,
   },
 ];
 

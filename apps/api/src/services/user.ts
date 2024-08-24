@@ -37,6 +37,7 @@ export const createUser = async (email: string, password: string) => {
       email: userTable.email,
       isEmailVerified: userTable.isEmailVerified,
       createdAt: userTable.createdAt,
+      plan: userTable.plan,
     })
     .get();
 
@@ -51,6 +52,16 @@ export const createUserWithoutPassword = async (email: string) => {
   // Get current date
   const createdAt = new Date();
 
+  /**
+   * Create stripe customer
+   */
+  const customer = await stripe.customers.create({
+    email,
+    metadata: {
+      userId: id,
+    },
+  });
+
   const user = await db
     .insert(userTable)
     .values({
@@ -58,6 +69,7 @@ export const createUserWithoutPassword = async (email: string) => {
       email,
       isEmailVerified: true,
       createdAt,
+      stripeCustomerId: customer.id,
     })
     .returning({
       id: userTable.id,
@@ -175,4 +187,3 @@ export const deleteUser = async (userId: string) => {
 
   return user;
 };
-

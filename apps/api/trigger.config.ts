@@ -3,7 +3,7 @@ import type { TriggerConfig } from "@trigger.dev/sdk/v3";
 export const config: TriggerConfig = {
   project: "proj_jzmnodnlzvzaafaydzfm",
   logLevel: "log",
-  dependenciesToBundle: ["nanoid", "ky"],
+  dependenciesToBundle: ["nanoid", "ky", "@t3-oss/env-core"],
   retries: {
     enabledInDev: true,
     default: {
