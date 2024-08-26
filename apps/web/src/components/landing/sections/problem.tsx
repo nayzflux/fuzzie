@@ -30,7 +30,7 @@ export default function Problem() {
 
       <div className="flex items-center gap-16 xl:gap-32">
         <div className="hidden lg:flex flex-col gap-4">
-          <p className="text-muted-foreground">Webhooks can be painful</p>
+          <p className="text-muted-foreground">Focus on what matters most</p>
 
           <Heading as="h1">Let us handle the intricate work.</Heading>
         </div>

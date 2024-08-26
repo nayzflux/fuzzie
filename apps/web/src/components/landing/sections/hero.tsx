@@ -13,9 +13,12 @@ export default function Hero() {
         <Heading as="h1">Deliver fast, secure and reliable webhooks.</Heading>
 
         <p className="text-sm sm:text-xl text-muted-foreground max-w-[800px]">
-          Fuzzie is an open-source webhook delivery platform designed to
+          {/* Fuzzie is an open-source webhook delivery platform designed to
           simplify and secure webhook interactions between both internal
-          services and customer&apos;s applications.
+          services and customer&apos;s applications. */}
+          Fuzzie is an open-source platform that transforms the way you deliver
+          webhooks. Making interactions between your services and customer
+          applications easy, reliable and secure.
         </p>
       </div>
 
