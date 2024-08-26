@@ -1,7 +1,6 @@
 import { Card } from "~/components/ui/card";
 import LandingSection from "./landing-section";
 import SectionTitle from "./section-title";
-import Particles from "~/components/magicui/particles";
 
 export default function Demo() {
   return (
@@ -9,13 +8,6 @@ export default function Demo() {
       <SectionTitle
         title="The easiest way to send webhooks."
         subtitle="Seamless integration"
-      />
-
-      <Particles
-        className="absolute inset-0"
-        quantity={100}
-        ease={80}
-        refresh
       />
 
       <Card className="p-6 w-full">
@@ -29,6 +21,13 @@ export default function Demo() {
           ></iframe>
         </div>
       </Card>
+
+      {/* <Particles
+        className="absolute inset-0"
+        quantity={100}
+        ease={80}
+        refresh
+      /> */}
     </LandingSection>
   );
 }

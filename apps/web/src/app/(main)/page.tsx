@@ -1,5 +1,6 @@
 import CTA from "~/components/landing/sections/cta";
 import Demo from "~/components/landing/sections/demo";
+import FAQ from "~/components/landing/sections/faq";
 import Hero from "~/components/landing/sections/hero";
 import Pricing from "~/components/landing/sections/pricing";
 import Problem from "~/components/landing/sections/problem";
@@ -22,6 +23,8 @@ export default function LandingPage() {
       <Pricing />
 
       <CTA />
+
+      <FAQ />
     </main>
   );
 }

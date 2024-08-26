@@ -11,7 +11,7 @@ export default function LandingSection({
   return (
     <section
       className={cn(
-        "relative flex flex-col w-full jusitfy-center items-center px-16 lg:px-32 xl:px-64 2xl:px-96 py-32 gap-16",
+        "relative flex flex-col w-full jusitfy-center items-center px-4 sm:px-16 lg:px-32 xl:px-64 2xl:px-96 py-16 sm:py-32 gap-8 sm:gap-16",
         className
       )}
     >

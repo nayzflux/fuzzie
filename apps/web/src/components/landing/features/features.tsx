@@ -6,8 +6,9 @@ import {
 } from "@heroicons/react/24/outline";
 import { BentoCard, BentoGrid } from "../../magicui/bento-grid";
 import { Logs } from "./logs";
-import { Trigger } from "./trigger";
 import { Retry } from "./retry";
+import { Security } from "./security";
+import { Trigger } from "./trigger";
 
 const features = [
   {
@@ -17,7 +18,7 @@ const features = [
     href: "#",
     cta: "Learn more",
     className: "col-span-3 lg:col-span-1",
-    background: <div></div>,
+    background: <Security />,
   },
   {
     Icon: PaperAirplaneIcon,
@@ -52,10 +53,12 @@ const features = [
 
 export default function Features() {
   return (
-    <BentoGrid>
-      {features.map((feature, idx) => (
-        <BentoCard key={idx} {...feature} />
-      ))}
-    </BentoGrid>
+    <div className="w-full" id="product">
+      <BentoGrid>
+        {features.map((feature, idx) => (
+          <BentoCard key={idx} {...feature} />
+        ))}
+      </BentoGrid>
+    </div>
   );
 }

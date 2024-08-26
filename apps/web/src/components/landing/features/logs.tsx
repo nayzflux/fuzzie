@@ -1,5 +1,6 @@
 import RequestsTable from "~/app/(authenticated)/app/(event)/[projectId]/events/[eventId]/webhook-requests-table";
 import { WebhookRequest } from "~/types/webhook-request";
+import { FeatureBackgrond } from "./feature-background";
 
 const requests: WebhookRequest[] = [
   {
@@ -60,10 +61,8 @@ const requests: WebhookRequest[] = [
 
 export const Logs = () => {
   return (
-    <div className="absolute h-full w-full transition-all duration-300 ease-out [mask-image:linear-gradient(to_top,transparent_10%,#000_100%)] group-hover:scale-105">
-      <div className="p-16">
-        <RequestsTable events={requests} />
-      </div>
-    </div>
+    <FeatureBackgrond>
+      <RequestsTable events={requests} />
+    </FeatureBackgrond>
   );
 };

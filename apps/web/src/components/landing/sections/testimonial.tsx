@@ -1,8 +1,8 @@
 import Marquee from "~/components/magicui/marquee";
+import Particles from "~/components/magicui/particles";
 import LandingSection from "./landing-section";
 import { ReviewCard } from "./review-card";
 import SectionTitle from "./section-title";
-import Particles from "~/components/magicui/particles";
 
 const reviews = [
   {
@@ -54,14 +54,7 @@ export default function Testimonial() {
         subtitle="Build with DX in mind"
       />
 
-      <Particles
-        className="absolute inset-0"
-        quantity={100}
-        ease={80}
-        refresh
-      />
-
-      <div className="relative flex py-8 w-full flex-col items-center justify-center overflow-hidden border bg-background md:shadow-xl">
+      <div className="relative flex py-8 w-full flex-col items-center justify-center overflow-hidden border bg-background md:shadow-xl z-10">
         <Marquee pauseOnHover className="[--duration:20s]">
           {firstRow.map((review) => (
             <ReviewCard key={review.username} {...review} />
@@ -77,6 +70,13 @@ export default function Testimonial() {
         <div className="pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-white dark:from-background"></div>
         <div className="pointer-events-none absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-white dark:from-background"></div>
       </div>
+
+      <Particles
+        className="absolute inset-0 -z-10"
+        quantity={300}
+        ease={80}
+        refresh
+      />
     </LandingSection>
   );
 }

@@ -11,14 +11,14 @@ export default function Product() {
         subtitle="Discover Fuzzie"
       />
 
+      <Features />
+
       <Particles
-        className="absolute inset-0"
-        quantity={100}
+        className="absolute inset-0 -z-10"
+        quantity={400}
         ease={80}
         refresh
       />
-
-      <Features />
     </LandingSection>
   );
 }
