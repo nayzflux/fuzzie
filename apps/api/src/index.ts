@@ -14,7 +14,7 @@ import webhook from "~/routes/webhook";
 // 100 request per 15 mins
 const limiter = rateLimiter({
   windowMs: 15 * 60 * 1000,
-  limit: 100,
+  limit: 200,
   standardHeaders: "draft-6",
   keyGenerator: async (c) => {
     const info = getConnInfo(c);

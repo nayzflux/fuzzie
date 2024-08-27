@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { cn } from "~/lib/utils";
 
 export default function Logo({
@@ -11,12 +12,14 @@ export default function Logo({
   className?: string;
 }) {
   return (
-    <Image
-      width={width}
-      height={height}
-      src="/logo.svg"
-      alt="Fuzzie Logo"
-      className={cn("size-12 rounded-lg", className)}
-    />
+    <Link href="/">
+      <Image
+        width={width}
+        height={height}
+        src="/logo.svg"
+        alt="Fuzzie Logo"
+        className={cn("size-12 rounded-lg", className)}
+      />
+    </Link>
   );
 }

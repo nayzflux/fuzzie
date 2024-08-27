@@ -3,7 +3,7 @@ import DashboardNav from "~/components/dashboard/header/nav/dashboard-nav";
 
 export default function DashboardHeader() {
   return (
-    <header className="sticky top-0 flex items-center gap-8 px-4 sm:px-16 lg:px-32 xl:px-64 2xl:px-96 py-8 min-h-[102px] bg-background z-50">
+    <header className="sticky top-0 flex items-center gap-8 px-4 sm:px-16 lg:px-32 xl:px-64 2xl:px-96 py-8 min-h-[102px] bg-background z-50 h-[103px]">
       {/* Breadcrumb navigation */}
       <DashboardNav />
 

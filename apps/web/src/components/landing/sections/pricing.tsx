@@ -1,34 +1,7 @@
+import plans from "~/data/plans.json";
 import { PricingCard } from "../pricing/pricing-card";
 import LandingSection from "./landing-section";
 import SectionTitle from "./section-title";
-
-const plans = [
-  {
-    title: "Free Tier",
-    description: "Everything you need to start.",
-    price: 0,
-    cta: "Start for Free",
-    features: [
-      "1k events triggered / month",
-      "5k webhooks delivered / month",
-      "7-days logs retention",
-      "Unlimited projects",
-    ],
-  },
-  {
-    title: "Pro Tier",
-    description: "Don't get limited by Free Tier.",
-    price: 25,
-    cta: "Start with Pro",
-    features: [
-      "10k events triggered / month",
-      "50k webhooks delivered / month",
-      "90-days logs retention",
-      "Unlimited projects",
-    ],
-    isPrimary: true,
-  },
-];
 
 export default function Pricing() {
   return (

@@ -30,13 +30,12 @@ export default function SubscriptionPage() {
       <Card>
         <CardHeader>
           <CardTitle>Current subscription</CardTitle>
-          <CardDescription>
-            Your subscription will be renewed on xxxx
-          </CardDescription>
+          {/* TODO: Display renew date */}
+          <CardDescription>Manage your current subscription</CardDescription>
         </CardHeader>
 
         <CardContent className="flex flex-col gap-2">
-          <p className="font-semibold text-4xl">{plan.label}</p>
+          <p className="font-semibold text-4xl">{plan.title}</p>
 
           <div className="flex items-center gap-2">
             <p className="font-semibold text-4xl">

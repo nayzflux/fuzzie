@@ -1,6 +1,7 @@
 "use client";
 
 import { CreditCardIcon, UserCircleIcon } from "@heroicons/react/24/outline";
+import { BarChartIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "~/components/ui/button";
@@ -11,6 +12,11 @@ const routes = [
     href: "/account",
     label: "Account",
     icon: UserCircleIcon,
+  },
+  {
+    href: "/account/usage",
+    label: "Usage",
+    icon: BarChartIcon,
   },
   {
     href: "/account/subscription",

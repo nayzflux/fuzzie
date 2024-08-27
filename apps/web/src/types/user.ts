@@ -1,7 +1,9 @@
 export type CurrentUser = {
   id: string;
-  email: string;
   isEmailVerified: boolean;
-  plan: "PRO" | "FREE";
-  createdAt: string;
+  email: string;
+  createdAt: Date;
+  plan: "FREE" | "PRO";
+  eventUsageCount: number;
+  webhookRequestUsageCount: number;
 };

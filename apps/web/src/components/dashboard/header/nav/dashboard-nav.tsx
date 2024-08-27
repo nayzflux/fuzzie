@@ -4,7 +4,6 @@ import Logo from "~/components/logo";
 import {
   Breadcrumb,
   BreadcrumbItem,
-  BreadcrumbLink,
   BreadcrumbList,
 } from "~/components/ui/breadcrumb";
 import ProjectItem from "./project-item";
@@ -17,9 +16,7 @@ export default function DashboardNav() {
         <BreadcrumbList>
           {/* Home */}
           <BreadcrumbItem>
-            <BreadcrumbLink href="/">
-              <Logo width={24} height={24} className="size-6 rounded-full" />
-            </BreadcrumbLink>
+            <Logo width={24} height={24} className="size-6 rounded-full" />
           </BreadcrumbItem>
 
           {/* Projects */}

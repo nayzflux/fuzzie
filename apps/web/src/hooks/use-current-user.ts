@@ -15,7 +15,7 @@ export const useCurrentUser = () => {
     queryKey: ["current-user"],
     queryFn: async () => {
       const res = await api.get("users/me");
-      const user = (await res.json()) satisfies CurrentUser;
+      const user = await res.json<CurrentUser>();
       return user;
     },
     /**

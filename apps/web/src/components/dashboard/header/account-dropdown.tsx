@@ -1,6 +1,13 @@
 "use client";
 
+import {
+  ArrowRightStartOnRectangleIcon,
+  BookOpenIcon,
+  CreditCardIcon,
+  UserCircleIcon,
+} from "@heroicons/react/24/outline";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { BarChartIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -32,11 +39,12 @@ export default function AccountDropdown() {
         title: "Signed Out",
         description: "You have been disconnected from your account.",
       });
-
-      push("/");
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["current-user"] });
+    },
+    onMutate: () => {
+      push("/");
     },
   });
 
@@ -66,22 +74,39 @@ export default function AccountDropdown() {
         <DropdownMenuSeparator />
 
         <DropdownMenuItem className="cursor-pointer" asChild>
-          <Link href="/account">Account</Link>
+          <Link href="/account">
+            <UserCircleIcon className="size-4 mr-2" />
+            Account
+          </Link>
         </DropdownMenuItem>
 
         <DropdownMenuItem className="cursor-pointer" asChild>
-          <Link href="/account/subscription">Subscription</Link>
+          <Link href="/account/usage">
+            <BarChartIcon className="size-4 mr-2" />
+            Usage
+          </Link>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem className="cursor-pointer" asChild>
+          <Link href="/account/subscription">
+            <CreditCardIcon className="size-4 mr-2" />
+            Subscription
+          </Link>
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />
 
         <DropdownMenuItem className="cursor-pointer" asChild>
-          <Link href="/docs">Docs</Link>
+          <Link href="/docs">
+            <BookOpenIcon className="size-4 mr-2" />
+            Docs
+          </Link>
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />
 
         <DropdownMenuItem className="cursor-pointer" onClick={() => mutate()}>
+          <ArrowRightStartOnRectangleIcon className="size-4 mr-2" />
           Sign out
         </DropdownMenuItem>
       </DropdownMenuContent>
